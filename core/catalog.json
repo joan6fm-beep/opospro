@@ -1,0 +1,32 @@
+{
+  "_comentario": "Ajustes manuales del catálogo. 'short_names' solo cambia la etiqueta visible del tema. 'esquemas_flat' asigna las imágenes de una carpeta sin subcarpetas a cada tema (verificado visualmente leyendo la cabecera de cada imagen). Las imágenes nuevas pueden colocarse en subcarpetas 'Resumen/ANEXO X/TEMA N' y se asignan solas.",
+  "short_names": {
+    "A1-T01": "La Constitución Española · Igualdad (LO 3/2007)",
+    "A1-T02": "Régimen local: el municipio y sus competencias",
+    "A1-T03": "La Administración local: el municipio",
+    "A1-T04": "Procedimiento administrativo: derechos y plazos",
+    "A1-T05": "Eficacia de los actos administrativos",
+    "A1-T06": "Iniciación, ordenación e instrucción del procedimiento",
+    "A1-T07": "El personal de las Entidades Locales (TREBEP)",
+    "A1-T08": "La organización municipal",
+    "A1-T09": "Haciendas Locales (TRLRHL)",
+    "A1-T10": "Prevención de Riesgos Laborales (Ley 31/1995)",
+    "A2-T01": "El acto administrativo",
+    "A2-T02": "Invalidez y revisión de los actos",
+    "CP": "Casos prácticos"
+  },
+  "esquemas_flat": {
+    "Resumen/ANEXO I": {
+      "A1-T01": [[1, 7, "Parte 1 · La Constitución Española de 1978"], [8, 11, "Parte 2 · LO 3/2007 de igualdad"]],
+      "A1-T02": [[12, 14, ""]],
+      "A1-T03": [[15, 21, ""]],
+      "A1-T04": [[22, 25, ""]],
+      "A1-T05": [[26, 29, ""]],
+      "A1-T06": [[30, 35, ""]],
+      "A1-T07": [[36, 43, ""]],
+      "A1-T08": [[44, 49, ""]],
+      "A1-T09": [[50, 55, ""]],
+      "A1-T10": [[56, 59, ""]]
+    }
+  }
+}
