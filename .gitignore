@@ -7,3 +7,4 @@ data/cache/
 *.db-journal
 .env
 .claude/settings.local.json
+static/sync-status.json

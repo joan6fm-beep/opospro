@@ -124,8 +124,15 @@ div[data-testid="stMetricValue"] { font-weight: 750; }
 """
 
 
+SIDEBAR_CSS = """<style>
+[data-testid="stSidebarContent"]{display:flex;flex-direction:column}
+[data-testid="stSidebarUserContent"]{order:-1;padding-top:.5rem;padding-bottom:0}
+</style>"""
+
+
 def inject() -> None:
     st.markdown(CSS, unsafe_allow_html=True)
+    st.markdown(SIDEBAR_CSS, unsafe_allow_html=True)  # estado de sincronización arriba, antes del menú
 
 
 def plotly_template() -> None:

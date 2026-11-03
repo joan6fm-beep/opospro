@@ -40,6 +40,21 @@ def status() -> dict:
     return dict(_status, repo=_cfg["repo"] if _cfg else None, pending=_dirty.is_set())
 
 
+def _publish_status() -> None:
+    """Estado sin datos sensibles en static/sync-status.json (permite comprobar la nube desde fuera)."""
+    try:
+        info = {k: _status[k] for k in ("active", "last_pull", "last_ok")}
+        info["error"] = bool(_status["last_error"])
+        info["error_msg"] = (_status["last_error"] or "")[:300]
+        info["secrets"] = {k: bool(_secret(k)) for k in ("DATA_REPO", "DATA_DEPLOY_KEY", "GITHUB_TOKEN")}
+        info["counts"] = {t: db.scalar(f"SELECT COUNT(*) FROM {t}", default=0) for t in ("exams", "exam_answers", "review_state")}
+        d = Path(__file__).resolve().parent.parent / "static"
+        d.mkdir(exist_ok=True)
+        (d / "sync-status.json").write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
+    except Exception:  # noqa: BLE001 - nunca debe afectar a la app
+        pass
+
+
 def _secret(key: str):
     v = os.environ.get(key)
     if v:
@@ -190,9 +205,11 @@ def _worker() -> None:
         try:
             _push()
             _status.update(last_ok=_now(), last_error=None)
+            _publish_status()
         except Exception as e:  # noqa: BLE001 - reintentar en el siguiente ciclo
             print(f"[cloudsync] error al subir: {e}")
             _status["last_error"] = f"{_now()} · {type(e).__name__}: {e}"
+            _publish_status()
             _dirty.set()
             time.sleep(60)
 
@@ -205,6 +222,7 @@ def start() -> bool:
     _started = True
     token, key, repo = _secret("GITHUB_TOKEN"), _secret("DATA_DEPLOY_KEY"), _secret("DATA_REPO")
     if not (repo and (token or key)):
+        _publish_status()
         return False
     _cfg = {"token": token, "repo": repo, "branch": _secret("DATA_BRANCH") or "main"}
     try:
@@ -216,8 +234,10 @@ def start() -> bool:
         _status["last_error"] = (f"{_now()} · no se pudo descargar el progreso ({type(e).__name__}: {e}). "
                                  "Sincronización detenida para no sobrescribir los datos de GitHub; reinicia la app.")
         print(f"[cloudsync] {_status['last_error']}")
+        _publish_status()
         return False
     _status.update(active=True, last_pull=_now())
+    _publish_status()
     db.init_db()
     db.add_write_hook(_dirty.set)
     threading.Thread(target=_worker, daemon=True, name="cloudsync").start()
