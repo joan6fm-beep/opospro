@@ -72,6 +72,7 @@ pages = {
 with st.sidebar:
     st.markdown("### 📘 OposPro")
     st.caption("Auxiliar Administrativo · Benicàssim")
+    nav.sync_badge()
 
 selected = st.navigation(pages, position="sidebar", expanded=True)
 # Gancho para las pruebas automáticas (AppTest no puede navegar a páginas definidas como funciones)

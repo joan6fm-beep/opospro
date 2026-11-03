@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from core import bank, cloudsync, config, db, explain, ingest, srs, userdata
+from core import bank, config, db, explain, ingest, srs, userdata
 from core.extract.test_parser import LETTERS
 from ui import nav
 from ui.components import badge, esc, kpi_row
@@ -159,12 +159,6 @@ Los documentos originales nunca se modifican.
 
 def render() -> None:
     nav.page_header("Banco y ajustes", "Inventario del material, preguntas pendientes, criterios de repaso, IA y copias de seguridad.", "⚙️")
-    sync = cloudsync.status()
-    if sync:
-        if sync["last_error"]:
-            st.error(f"☁️ No se pudo guardar el progreso en GitHub ({sync['repo']}): {sync['last_error']}. Se reintentará.")
-        else:
-            st.caption(f"☁️ Progreso sincronizado con GitHub · último guardado: {sync['last_ok'] or 'pendiente de cambios'}")
     tabs = st.tabs(["📦 Inventario", "⚠️ Pendientes de revisión", "🔁 Repaso", "✨ IA", "💾 Copias y exportación", "📥 Importar"])
     with tabs[0]:
         _inventory()

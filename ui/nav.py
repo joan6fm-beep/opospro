@@ -51,3 +51,22 @@ def timer_picker(key: str, n_questions: int | None = None) -> int | None:
     default = max(5, int(round((n_questions or 30) * 1.0)))
     mins = c2.number_input("Minutos", min_value=1, max_value=600, value=default, step=5, key=f"{key}_min")
     return int(mins * 60)
+
+
+@st.fragment(run_every="30s")
+def sync_badge() -> None:
+    """Indicador del guardado del progreso en GitHub (repo privado de datos)."""
+    import os
+
+    from core import cloudsync
+    s = cloudsync.status()
+    if s["last_error"]:
+        st.error(f"☁️ Error de sincronización con GitHub: {s['last_error']}", icon="⚠️")
+    elif s["active"]:
+        when = s["last_ok"] or f"sin cambios nuevos (descargado {s['last_pull']})"
+        st.caption(f"☁️ Progreso en GitHub · último guardado: {when}" + (" · guardando…" if s["pending"] else ""))
+    elif os.name != "nt":
+        st.warning("☁️ Sincronización con GitHub desactivada: el progreso se perderá al reiniciar la app. "
+                   "Faltan los secrets GITHUB_TOKEN y DATA_REPO.", icon="⚠️")
+    else:
+        st.caption("💻 Progreso guardado solo en este ordenador (no se sube a GitHub).")

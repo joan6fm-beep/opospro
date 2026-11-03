@@ -25,12 +25,16 @@ _cfg: dict | None = None
 _sha: str | None = None
 _dirty = threading.Event()
 _started = False
-_status = {"last_ok": None, "last_error": None}
+_status = {"active": False, "last_pull": None, "last_ok": None, "last_error": None}
 
 
-def status() -> dict | None:
-    """Estado de la sincronización (None si no está activa)."""
-    return dict(_status, repo=_cfg["repo"]) if _cfg else None
+def _now() -> str:
+    return time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime())
+
+
+def status() -> dict:
+    """Estado de la sincronización: active=False si faltan los secrets o falló la descarga inicial."""
+    return dict(_status, repo=_cfg["repo"] if _cfg else None, pending=_dirty.is_set())
 
 
 def _secret(key: str):
@@ -135,10 +139,10 @@ def _worker() -> None:
         _dirty.clear()
         try:
             _push()
-            _status.update(last_ok=time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()), last_error=None)
+            _status.update(last_ok=_now(), last_error=None)
         except Exception as e:  # noqa: BLE001 - reintentar en el siguiente ciclo
             print(f"[cloudsync] error al subir: {e}")
-            _status["last_error"] = f"{time.strftime('%H:%M:%S UTC', time.gmtime())} · {type(e).__name__}: {e}"
+            _status["last_error"] = f"{_now()} · {type(e).__name__}: {e}"
             _dirty.set()
             time.sleep(60)
 
@@ -153,7 +157,15 @@ def start() -> bool:
     if not (token and repo):
         return False
     _cfg = {"token": token, "repo": repo, "branch": _secret("DATA_BRANCH") or "main"}
-    _pull()
+    try:
+        _pull()
+    except Exception as e:  # noqa: BLE001
+        # sin la copia de GitHub NO se sube nada: así no se sobrescribe el progreso guardado con datos antiguos
+        _status["last_error"] = (f"{_now()} · no se pudo descargar el progreso ({type(e).__name__}: {e}). "
+                                 "Sincronización detenida para no sobrescribir los datos de GitHub; reinicia la app.")
+        print(f"[cloudsync] {_status['last_error']}")
+        return False
+    _status.update(active=True, last_pull=_now())
     db.init_db()
     db.add_write_hook(_dirty.set)
     threading.Thread(target=_worker, daemon=True, name="cloudsync").start()
