@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DOCS_DIR = Path(os.environ.get("OPOS_DOCS_DIR", ROOT))
 
 # Subcarpetas del proyecto que NO contienen material de estudio.
-EXCLUDED_DIRS = {"core", "ui", "data", "tests", ".venv", "venv", "__pycache__", ".git", ".streamlit", "views"}
+EXCLUDED_DIRS = {"core", "ui", "data", "tests", ".venv", "venv", "__pycache__", ".git", ".streamlit", "views", "scripts", "static", ".vscode", ".claude"}
 
 DATA_DIR = Path(os.environ.get("OPOS_DATA_DIR", ROOT / "data"))
 DB_PATH = Path(os.environ.get("OPOS_DB_PATH", DATA_DIR / "oposiciones.db"))

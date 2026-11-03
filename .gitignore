@@ -6,3 +6,4 @@ data/backups/
 data/cache/
 *.db-journal
 .env
+.claude/settings.local.json
