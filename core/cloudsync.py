@@ -25,6 +25,12 @@ _cfg: dict | None = None
 _sha: str | None = None
 _dirty = threading.Event()
 _started = False
+_status = {"last_ok": None, "last_error": None}
+
+
+def status() -> dict | None:
+    """Estado de la sincronización (None si no está activa)."""
+    return dict(_status, repo=_cfg["repo"]) if _cfg else None
 
 
 def _secret(key: str):
@@ -70,6 +76,7 @@ def _pull() -> None:
         path.write_bytes(data)                  # progreso del usuario (repo privado)
         _refresh_bank(bundled)
         bundled.unlink(missing_ok=True)
+        db.invalidate()
 
 
 def _refresh_bank(bundled) -> None:
@@ -96,15 +103,15 @@ def _refresh_bank(bundled) -> None:
 
 
 def _snapshot() -> bytes:
-    with db._lock:
-        fd, tmp = tempfile.mkstemp(suffix=".db")
-        os.close(fd)
-        src, dst = db.connect(), sqlite3.connect(tmp)
-        try:
-            src.backup(dst)
-        finally:
-            src.close()
-            dst.close()
+    # sin bloquear la interfaz: la copia en caliente de SQLite ya es coherente por sí misma
+    fd, tmp = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    src, dst = db.connect(), sqlite3.connect(tmp)
+    try:
+        src.backup(dst)
+    finally:
+        src.close()
+        dst.close()
     try:
         with open(tmp, "rb") as f:
             return f.read()
@@ -128,8 +135,10 @@ def _worker() -> None:
         _dirty.clear()
         try:
             _push()
+            _status.update(last_ok=time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()), last_error=None)
         except Exception as e:  # noqa: BLE001 - reintentar en el siguiente ciclo
             print(f"[cloudsync] error al subir: {e}")
+            _status["last_error"] = f"{time.strftime('%H:%M:%S UTC', time.gmtime())} · {type(e).__name__}: {e}"
             _dirty.set()
             time.sleep(60)
 

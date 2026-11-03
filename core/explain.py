@@ -60,25 +60,38 @@ def build(q: Question, selected: str | None) -> Explanation:
 
 # ------------------------------------------------------------------ IA opcional
 
+_KEY_UNSET = object()
+_key_cache = _KEY_UNSET
+_sdk_ok: bool | None = None
+
+
 def _api_key() -> str | None:
-    k = os.environ.get("ANTHROPIC_API_KEY")
-    if k:
-        return k
-    try:
-        import streamlit as st
-        return st.secrets.get("ANTHROPIC_API_KEY")  # type: ignore[attr-defined]
-    except Exception:
-        return None
+    """Clave del servidor (variable de entorno o secrets); se lee una sola vez por proceso."""
+    global _key_cache
+    if _key_cache is _KEY_UNSET:
+        k = os.environ.get("ANTHROPIC_API_KEY")
+        if not k:
+            try:
+                import streamlit as st
+                k = st.secrets.get("ANTHROPIC_API_KEY")  # type: ignore[attr-defined]
+            except Exception:
+                k = None
+        _key_cache = k
+    return _key_cache
+
+
+def _sdk_available() -> bool:
+    global _sdk_ok
+    if _sdk_ok is None:
+        import importlib.util  # comprobar sin importar: el SDK tarda varios segundos en cargarse
+        _sdk_ok = importlib.util.find_spec("anthropic") is not None
+    return _sdk_ok
 
 
 def ai_available() -> bool:
     if not db.get_setting("ai_enabled", True):
         return False
-    try:
-        import anthropic  # noqa: F401
-    except ImportError:
-        return False
-    return bool(_api_key())
+    return bool(_api_key()) and _sdk_available()
 
 
 SYSTEM = (

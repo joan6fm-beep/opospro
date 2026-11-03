@@ -108,6 +108,7 @@ def set_db_path(path: Path) -> None:
     """Permite usar otra base de datos (pruebas)."""
     global _db_path
     _db_path = Path(path)
+    invalidate()
     init_db()
 
 
@@ -116,6 +117,17 @@ def get_db_path() -> Path:
 
 
 _write_hooks: list = []
+_generation = 0  # aumenta con cada escritura: invalida las cachés en memoria del banco
+
+
+def generation() -> int:
+    return _generation
+
+
+def invalidate() -> None:
+    """Llamar si el fichero de la base de datos se sustituye o modifica fuera de `tx()`."""
+    global _generation
+    _generation += 1
 
 
 def add_write_hook(fn) -> None:
@@ -127,7 +139,6 @@ def connect() -> sqlite3.Connection:
     con = sqlite3.connect(_db_path, timeout=30, check_same_thread=False)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA foreign_keys=ON")
-    con.execute("PRAGMA journal_mode=DELETE")  # más seguro en carpetas sincronizadas (OneDrive)
     return con
 
 
@@ -139,6 +150,8 @@ def tx():
             yield con
             con.commit()
             if con.total_changes:
+                global _generation
+                _generation += 1
                 for hook in _write_hooks:
                     hook()
         except Exception:
@@ -150,6 +163,7 @@ def tx():
 
 def init_db() -> None:
     with tx() as con:
+        con.execute("PRAGMA journal_mode=DELETE")  # persistente; más seguro en carpetas sincronizadas (OneDrive)
         con.executescript(BANK_SCHEMA)
         con.executescript(USER_SCHEMA)
 

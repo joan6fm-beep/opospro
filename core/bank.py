@@ -1,6 +1,7 @@
 """Consultas sobre el banco de preguntas, temas y teoría."""
 from __future__ import annotations
 
+import functools
 import json
 from dataclasses import dataclass
 
@@ -64,7 +65,8 @@ def get_questions(qids: list[str]) -> dict[str, Question]:
     return out
 
 
-def topics(include_empty: bool = True) -> list[dict]:
+@functools.lru_cache(maxsize=4)
+def _topics_cached(gen: int) -> tuple[dict, ...]:
     rows = db.query("""
         SELECT t.*, (SELECT COUNT(DISTINCT qs.question_id) FROM question_sources qs JOIN tests ts ON ts.id=qs.test_id
                      JOIN questions q ON q.id=qs.question_id WHERE ts.topic_id=t.id AND q.status IN """ + SCOREABLE_SQL + """) AS n_scoreable,
@@ -73,7 +75,12 @@ def topics(include_empty: bool = True) -> list[dict]:
                (SELECT COUNT(*) FROM sections s WHERE s.topic_id=t.id) AS n_sections,
                (SELECT COUNT(*) FROM esquemas e WHERE e.topic_id=t.id) AS n_esquemas
         FROM topics t ORDER BY sort_order""")
-    out = [dict(r) for r in rows]
+    return tuple(dict(r) for r in rows)
+
+
+def topics(include_empty: bool = True) -> list[dict]:
+    """Temas con sus recuentos (cacheado en memoria hasta la siguiente escritura en la base de datos)."""
+    out = [dict(t) for t in _topics_cached(db.generation())]
     return out if include_empty else [t for t in out if t["n_scoreable"] > 0]
 
 
@@ -84,7 +91,7 @@ def topic(tid: str) -> dict | None:
 def topic_label(tid: str | None, short: bool = False) -> str:
     if not tid:
         return "—"
-    t = db.query_one("SELECT * FROM topics WHERE id=?", (tid,))
+    t = next((x for x in _topics_cached(db.generation()) if x["id"] == tid), None)
     if not t:
         return tid
     if t["anexo"] in ("I", "II"):
@@ -98,14 +105,19 @@ def topic_labels() -> dict[str, str]:
 
 
 def question_ids_for_topics(topic_ids: list[str] | None, scoreable_only: bool = True) -> list[str]:
+    return list(_qids_cached(db.generation(), tuple(topic_ids or ()), scoreable_only))
+
+
+@functools.lru_cache(maxsize=64)
+def _qids_cached(gen: int, topic_ids: tuple, scoreable_only: bool) -> tuple[str, ...]:
     sql = "SELECT DISTINCT qs.question_id FROM question_sources qs JOIN tests ts ON ts.id=qs.test_id JOIN questions q ON q.id=qs.question_id WHERE 1=1"
     params: list = []
     if topic_ids:
         sql += f" AND ts.topic_id IN ({','.join('?' * len(topic_ids))})"
-        params += topic_ids
+        params += list(topic_ids)
     if scoreable_only:
         sql += " AND q.status IN " + SCOREABLE_SQL
-    return [r[0] for r in db.query(sql, params)]
+    return tuple(r[0] for r in db.query(sql, params))
 
 
 def tests_for_topic(tid: str) -> list[dict]:

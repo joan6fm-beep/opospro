@@ -7,7 +7,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-from core import bank, config, db, explain, ingest, srs, userdata
+from core import bank, cloudsync, config, db, explain, ingest, srs, userdata
 from core.extract.test_parser import LETTERS
 from ui import nav
 from ui.components import badge, esc, kpi_row
@@ -105,13 +105,11 @@ def _ai() -> None:
     st.markdown("Las explicaciones **oficiales** (solucionario) y las **citas del temario** funcionan siempre, sin conexión. "
                 "Opcionalmente puedes activar explicaciones y resúmenes redactados por IA (Claude), que usan **solo** el texto "
                 "de tus documentos y se marcan siempre como «Generado por IA».")
-    on = st.toggle("Permitir IA", value=bool(db.get_setting("ai_enabled", True)))
-    db.set_setting("ai_enabled", on)
-    try:
-        import anthropic  # noqa: F401
-        has_pkg = True
-    except ImportError:
-        has_pkg = False
+    cur = bool(db.get_setting("ai_enabled", True))
+    on = st.toggle("Permitir IA", value=cur)
+    if on != cur:  # escribir solo si cambia (cada escritura se sincroniza con la nube)
+        db.set_setting("ai_enabled", on)
+    has_pkg = explain._sdk_available()
     st.markdown(f"- Paquete `anthropic`: {'✅ instalado' if has_pkg else '❌ no instalado (`pip install anthropic`)'}\n"
                 f"- Clave `ANTHROPIC_API_KEY`: {'✅ encontrada' if explain._api_key() else '❌ no configurada'}\n"
                 f"- Modelo: `{explain.AI_MODEL}`\n- Estado: {'**activa**' if explain.ai_available() else 'inactiva'}")
@@ -161,6 +159,12 @@ Los documentos originales nunca se modifican.
 
 def render() -> None:
     nav.page_header("Banco y ajustes", "Inventario del material, preguntas pendientes, criterios de repaso, IA y copias de seguridad.", "⚙️")
+    sync = cloudsync.status()
+    if sync:
+        if sync["last_error"]:
+            st.error(f"☁️ No se pudo guardar el progreso en GitHub ({sync['repo']}): {sync['last_error']}. Se reintentará.")
+        else:
+            st.caption(f"☁️ Progreso sincronizado con GitHub · último guardado: {sync['last_ok'] or 'pendiente de cambios'}")
     tabs = st.tabs(["📦 Inventario", "⚠️ Pendientes de revisión", "🔁 Repaso", "✨ IA", "💾 Copias y exportación", "📥 Importar"])
     with tabs[0]:
         _inventory()
