@@ -66,7 +66,10 @@ def sync_badge() -> None:
         when = s["last_ok"] or f"sin cambios nuevos (descargado {s['last_pull']})"
         st.caption(f"☁️ Progreso en GitHub · último guardado: {when}" + (" · guardando…" if s["pending"] else ""))
     elif os.name != "nt":
-        st.warning("☁️ Sincronización con GitHub desactivada: el progreso se perderá al reiniciar la app. "
-                   "Faltan los secrets GITHUB_TOKEN y DATA_REPO.", icon="⚠️")
+        f = cloudsync.secrets_found()
+        det = " · ".join(f"{k} {'✅' if f[k] else '❌'}" for k in ("DATA_REPO", "DATA_DEPLOY_KEY"))
+        err = f" · secrets.toml no válido ({s['secrets_error']})" if s.get("secrets_error") else ""
+        st.warning(f"☁️ Sincronización con GitHub desactivada: el progreso se perderá al reiniciar la app. "
+                   f"Secrets detectados: {det}{err}", icon="⚠️")
     else:
         st.caption("💻 Progreso guardado solo en este ordenador (no se sube a GitHub).")

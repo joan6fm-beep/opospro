@@ -28,7 +28,7 @@ _cfg: dict | None = None
 _sha: str | None = None
 _dirty = threading.Event()
 _started = False
-_status = {"active": False, "last_pull": None, "last_ok": None, "last_error": None}
+_status = {"active": False, "last_pull": None, "last_ok": None, "last_error": None, "secrets_error": None}
 
 
 def _now() -> str:
@@ -46,7 +46,8 @@ def _publish_status() -> None:
         info = {k: _status[k] for k in ("active", "last_pull", "last_ok")}
         info["error"] = bool(_status["last_error"])
         info["error_msg"] = (_status["last_error"] or "")[:300]
-        info["secrets"] = {k: bool(_secret(k)) for k in ("DATA_REPO", "DATA_DEPLOY_KEY", "GITHUB_TOKEN")}
+        info["secrets"] = secrets_found()
+        info["secrets_error"] = _status["secrets_error"]
         info["counts"] = {t: db.scalar(f"SELECT COUNT(*) FROM {t}", default=0) for t in ("exams", "exam_answers", "review_state")}
         d = Path(__file__).resolve().parent.parent / "static"
         d.mkdir(exist_ok=True)
@@ -56,14 +57,27 @@ def _publish_status() -> None:
 
 
 def _secret(key: str):
+    """Busca el secret sin distinguir mayúsculas, también dentro de una sección [..] de secrets.toml."""
     v = os.environ.get(key)
     if v:
         return v
     try:
         import streamlit as st
-        return st.secrets.get(key)
-    except Exception:  # noqa: BLE001 - sin secrets.toml
+        d = st.secrets.to_dict()
+        _status["secrets_error"] = None
+    except Exception as e:  # noqa: BLE001 - sin secrets.toml o con formato no válido
+        _status["secrets_error"] = type(e).__name__  # sin el mensaje: podría citar parte de la clave
         return None
+    tables = [d] + [x for x in d.values() if isinstance(x, dict)]
+    for t in tables:
+        for k, val in t.items():
+            if k.strip().upper() == key and val:
+                return val
+    return None
+
+
+def secrets_found() -> dict:
+    return {k: bool(_secret(k)) for k in ("DATA_REPO", "DATA_DEPLOY_KEY", "GITHUB_TOKEN")}
 
 
 def _api(method: str, body: dict | None = None):
@@ -217,8 +231,8 @@ def _worker() -> None:
 def start() -> bool:
     """Descarga la base de datos y activa la subida automática. Devuelve True si está activo."""
     global _cfg, _started
-    if _started:
-        return _cfg is not None
+    if _status["active"] or (_started and _cfg is not None):
+        return _status["active"]  # ya activa, o falló la descarga (no se reintenta para no sobrescribir)
     _started = True
     token, key, repo = _secret("GITHUB_TOKEN"), _secret("DATA_DEPLOY_KEY"), _secret("DATA_REPO")
     if not (repo and (token or key)):

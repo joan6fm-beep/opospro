@@ -27,6 +27,7 @@ def _bootstrap() -> bool:
 
 
 _bootstrap()
+cloudsync.start()  # si los secrets se guardan con la app ya en marcha, se activa sin reiniciar
 if "_daily_backup" not in st.session_state:
     try:
         userdata.auto_daily_backup()
