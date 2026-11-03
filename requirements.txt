@@ -1,4 +1,4 @@
-streamlit>=1.64,<2
+streamlit==1.66.1  # versión fija: evita que cada despliegue cambie el frontend (error "Failed to fetch dynamically imported module")
 plotly>=5.20,<8
 pandas>=2.0,<4
 pymupdf>=1.24,<3
