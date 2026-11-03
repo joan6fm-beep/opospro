@@ -1,6 +1,7 @@
 """Sincroniza la base de datos con un repositorio privado de GitHub (solo en la nube).
 
-Se activa únicamente si existen los secrets GITHUB_TOKEN y DATA_REPO ("usuario/repo").
+Se activa si existen los secrets DATA_REPO ("usuario/repo") y DATA_DEPLOY_KEY (clave SSH de despliegue,
+solo para ese repo) o GITHUB_TOKEN.
 Al arrancar descarga oposiciones.db; tras cada escritura la sube (agrupando cambios).
 En local, sin esos secrets, no hace nada.
 """
@@ -11,8 +12,10 @@ import json
 import os
 import sqlite3
 import tempfile
+import subprocess
 import threading
 import time
+from pathlib import Path
 import urllib.error
 import urllib.request
 
@@ -57,10 +60,57 @@ def _api(method: str, body: dict | None = None):
         return json.loads(r.read())
 
 
+GITHUB_HOST_KEY = "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
+
+
+def _git(*args: str, cwd=None) -> str:
+    return subprocess.run(["git", *args], cwd=cwd or _cfg["dir"], env=_cfg["env"], capture_output=True, text=True,
+                          timeout=180, check=True).stdout
+
+
+def _setup_git(key: str) -> None:
+    """Clave de despliegue (solo da acceso a DATA_REPO): se usa git por SSH, sin tokens."""
+    d = Path(tempfile.mkdtemp(prefix="opos_sync_"))
+    kf, kh = d / "key", d / "known_hosts"
+    kf.write_bytes((key.strip().replace(chr(13), "") + chr(10)).encode())
+    kf.chmod(0o600)
+    kh.write_text(GITHUB_HOST_KEY + chr(10))
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0",
+               GIT_SSH_COMMAND=f'ssh -i "{kf.as_posix()}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes '
+                               f'-o UserKnownHostsFile="{kh.as_posix()}"')
+    _cfg.update(dir=str(d / "repo"), env=env, url=_secret("DATA_GIT_URL") or f"git@github.com:{_cfg['repo']}.git")
+
+
+def _git_api(method: str, body: dict | None = None):
+    """Misma interfaz que `_api`, pero con git: un push solo prospera si nadie subió algo más nuevo."""
+    d, br = Path(_cfg["dir"]), _cfg["branch"]
+    if method == "GET":
+        if not d.exists():
+            _git("clone", "-q", "--depth", "1", "--branch", br, _cfg["url"], str(d), cwd=d.parent)
+        f = d / FILE
+        if not f.exists():
+            raise urllib.error.HTTPError(_cfg["url"], 404, "no existe", {}, None)
+        return {"sha": _git("rev-parse", "HEAD").strip(), "content": base64.b64encode(f.read_bytes()).decode()}
+    (d / FILE).write_bytes(base64.b64decode(body["content"]))
+    _git("add", FILE)
+    _git("-c", "user.name=OposPro", "-c", "user.email=opospro@users.noreply.github.com", "commit", "-q", "-m", body["message"])
+    try:
+        _git("push", "-q", "origin", f"HEAD:{br}")
+    except subprocess.CalledProcessError as e:
+        _git("reset", "-q", "--soft", "HEAD~1")
+        raise RuntimeError("GitHub rechazó la subida (¿hay datos más recientes desde otro dispositivo?). "
+                           "No se sobrescribe nada; reinicia la app. " + (e.stderr or "")[-200:]) from None
+    return {"content": {"sha": _git("rev-parse", "HEAD").strip()}}
+
+
+def _call(method: str, body: dict | None = None):
+    return _git_api(method, body) if _cfg.get("env") else _api(method, body)
+
+
 def _pull() -> None:
     global _sha
     try:
-        meta = _api("GET")
+        meta = _call("GET")
     except urllib.error.HTTPError as e:
         if e.code == 404:  # primera vez: se subirá la base actual
             _dirty.set()
@@ -129,7 +179,7 @@ def _push() -> None:
             "content": base64.b64encode(_snapshot()).decode()}
     if _sha:
         body["sha"] = _sha
-    _sha = _api("PUT", body)["content"]["sha"]
+    _sha = _call("PUT", body)["content"]["sha"]
 
 
 def _worker() -> None:
@@ -153,11 +203,13 @@ def start() -> bool:
     if _started:
         return _cfg is not None
     _started = True
-    token, repo = _secret("GITHUB_TOKEN"), _secret("DATA_REPO")
-    if not (token and repo):
+    token, key, repo = _secret("GITHUB_TOKEN"), _secret("DATA_DEPLOY_KEY"), _secret("DATA_REPO")
+    if not (repo and (token or key)):
         return False
     _cfg = {"token": token, "repo": repo, "branch": _secret("DATA_BRANCH") or "main"}
     try:
+        if key and not token:
+            _setup_git(key)
         _pull()
     except Exception as e:  # noqa: BLE001
         # sin la copia de GitHub NO se sube nada: así no se sobrescribe el progreso guardado con datos antiguos
