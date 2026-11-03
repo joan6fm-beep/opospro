@@ -11,6 +11,7 @@ import pymupdf
 HEADER_RE = re.compile(r"^p[áa]g\.\s*\d+\s*$", re.I)
 NOISE_RE = re.compile(r"^\[Escriba aquí\]$", re.I)
 
+OPT_LABEL_RE = re.compile(r"^[a-hA-H]\)$")
 
 @dataclass
 class Line:
@@ -19,6 +20,7 @@ class Line:
     size: float
     bold: bool
     block: int = 0     # índice global de bloque (párrafo) en el documento
+    body_bold: bool = False  # texto en negrita tras la etiqueta «a)» (solucionarios que marcan la opción correcta así)
 
 
 def file_hash(path: Path) -> str:
@@ -57,7 +59,9 @@ def read_lines(path: Path, strip_headers: bool = True) -> list[Line]:
                     continue
                 bold = all(("Bold" in s["font"]) or (s["flags"] & 16) for s in spans)
                 size = max(s["size"] for s in spans)
-                plines.append(Line(text, pno, round(size, 1), bool(bold), bid))
+                body = [s for s in spans if not OPT_LABEL_RE.match(s["text"].strip())]
+                body_bold = bool(body) and len(body) < len(spans) and all(("Bold" in s["font"]) or (s["flags"] & 16) for s in body)
+                plines.append(Line(text, pno, round(size, 1), bool(bold), bid, body_bold))
         if strip_headers:
             for i, ln in enumerate(plines[:6]):
                 if HEADER_RE.match(ln.text):

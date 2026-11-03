@@ -134,6 +134,19 @@ def parse_solutions(lines: list[Line]) -> list[ParsedSolution]:
             grid.setdefault(int(mg.group(1)), ParsedSolution(int(mg.group(1)), mg.group(2).lower(), page=ln.page))
     if len(grid) > len(sols) and sorted(grid) == list(range(1, len(grid) + 1)):
         return [grid[n] for n in sorted(grid)]
+    # solucionario que repite el test y marca en negrita el texto de la opción correcta
+    if not sols:
+        bold, num, expected = {}, None, 1
+        for ln in lines:
+            mq = Q_NUM_RE.match(ln.text)
+            if mq and int(mq.group(1)) == expected:
+                num, expected = expected, expected + 1
+                continue
+            mo = OPT_RE.match(ln.text)
+            if num and mo and ln.body_bold and num not in bold:
+                bold[num] = ParsedSolution(num, mo.group(1).lower(), page=ln.page)
+        if sorted(bold) == list(range(1, len(bold) + 1)):
+            return [bold[n] for n in sorted(bold)]
     return sols
 
 

@@ -28,5 +28,8 @@
       "A1-T09": [[50, 55, ""]],
       "A1-T10": [[56, 59, ""]]
     }
+  },
+  "correcciones": {
+    "2a5152f7974a67": {"letra": "b", "motivo": "Corregida: el solucionario oficial marca la A, pero el art. 5 de la LO 3/2007 establece que dicha diferencia de trato «no constituirá discriminación en el acceso al empleo, incluida la formación necesaria» (opción B)."}
   }
 }

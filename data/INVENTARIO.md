@@ -1,15 +1,15 @@
 # Inventario del material de estudio
 
-Generado: 2026-11-02T10:46:39
+Generado: 2026-11-03T16:43:26
 
 | Concepto | Valor |
 |---|---|
 | Temas detectados | 12 |
-| Documentos | 104 (equivalencias: 1, esquema: 66, soluciones: 11, supuesto: 1, teoria: 13, test: 12) |
-| Test originales | 12 |
-| Preguntas totales (apariciones) | 530 |
-| Preguntas únicas | 529 |
-| Preguntas con respuesta verificada | 503 |
+| Documentos | 107 (documento: 1, equivalencias: 1, esquema: 66, soluciones: 12, supuesto: 1, teoria: 13, test: 13) |
+| Test originales | 13 |
+| Preguntas totales (apariciones) | 550 |
+| Preguntas únicas | 549 |
+| Preguntas con respuesta verificada | 523 |
 | Preguntas pendientes de revisión | 25 |
 | Preguntas con contradicción | 1 |
 | Apartados de teoría | 362 |
@@ -25,7 +25,7 @@ Generado: 2026-11-02T10:46:39
 | A1-T04 | Procedimiento administrativo: derechos y plazos | 50 | 50 | 24 | 4 |
 | A1-T05 | Eficacia de los actos administrativos | 50 | 50 | 11 | 4 |
 | A1-T06 | Iniciación, ordenación e instrucción del procedimiento | 50 | 50 | 21 | 6 |
-| A1-T07 | El personal de las Entidades Locales (TREBEP) | 0 | 0 | 33 | 8 |
+| A1-T07 | El personal de las Entidades Locales (TREBEP) | 20 | 20 | 33 | 8 |
 | A1-T08 | La organización municipal | 50 | 50 | 20 | 6 |
 | A1-T09 | Haciendas Locales (TRLRHL) | 25 | 24 | 88 | 6 |
 | A1-T10 | Prevención de Riesgos Laborales (Ley 31/1995) | 0 | 0 | 21 | 4 |
@@ -44,6 +44,7 @@ Generado: 2026-11-02T10:46:39
 | Benicasim/TEMA 4/Test Tema 4.pdf | A1-T04 | 50 | 50 | Benicasim/TEMA 4/Soluciones Test Tema 4.pdf |
 | Benicasim/TEMA 5/Test Tema 5.pdf | A1-T05 | 50 | 50 | Benicasim/TEMA 5/Soluciones Test Tema 5.pdf |
 | Benicasim/TEMA 6/Test Tema 6.pdf | A1-T06 | 50 | 50 | Benicasim/TEMA 6/Soluciones Test - Tema 6.pdf |
+| Benicasim/TEMA 7/Test Tema 7.pdf | A1-T07 | 20 | 20 | Benicasim/TEMA 7/Soluciones Test Tema 7.pdf |
 | Benicasim/TEMA 8/Test Tema 8.pdf | A1-T08 | 50 | 50 | Benicasim/TEMA 8/Soluciones Test Tema 8.pdf |
 | Benicasim/TEMA 9/Test Tema 9.pdf | A1-T09 | 25 | 24 | Benicasim/TEMA 9/Soluciones Test Tema 9.pdf |
 | Benicasim/TEMA 11/Test - Tema 1 Anexo II.pdf | A2-T01 | 50 | 50 | Benicasim/TEMA 11/Soluciones Test - Tema 1 Anexo II.pdf |
@@ -54,6 +55,9 @@ Generado: 2026-11-02T10:46:39
 
 ### sin_solucionario (1)
 - `Caso practico/Practica 1.pdf` — El test «Practica 1.pdf» no tiene solucionario: sus 25 preguntas quedan pendientes de revisión.
+
+### documento_ilegible (1)
+- `Resumen/PARTE 2.pdf` — PDF sin páginas legibles (archivo dañado o incompleto); se omite
 
 ### duplicado_exacto (1)
 - `Benicasim/TEMA 1/Test Tema 1 - Parte 2 (1).pdf` — Pregunta 20 idéntica a otra ya importada (Benicasim/TEMA 1/Test Tema 1 - Parte 2 (1).pdf nº 6)

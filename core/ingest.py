@@ -178,6 +178,9 @@ def run(verbose: bool = True) -> dict:
     # --- 1. carpetas con documentos
     for folder, fl in sorted(by_folder.items()):
         docs = [f for f in fl if f.suffix.lower() in DOC_EXT]
+        for d in [d for d in docs if d.suffix.lower() == ".pdf" and pages_of(d) == 0]:
+            docs.remove(d)  # PDF dañado o a medio copiar: se omite sin abortar la importación
+            rep.issue("documento_ilegible", rel(d), "PDF sin páginas legibles (archivo dañado o incompleto); se omite")
         imgs = [f for f in fl if f.suffix.lower() in IMG_EXT]
         if docs:
             tinfo = detect_topic(folder, docs)
@@ -366,6 +369,12 @@ def run(verbose: bool = True) -> dict:
             q.update(correct_letter=r["letter"], status="verificada_usuario",
                      status_reason=f"Solución introducida por el usuario ({r['source']})")
 
+    # erratas del solucionario corregidas según la norma (core/catalog.json → «correcciones»)
+    for qid, cfix in CATALOG.get("correcciones", {}).items():
+        q = questions.get(qid)
+        if q:
+            q.update(correct_letter=cfix["letra"], official_justification=cfix["motivo"])
+
     # --- 4. teoría: apartados y párrafos
     section_rows, chunk_rows = [], []
     sid = cid = 0
@@ -398,7 +407,8 @@ def run(verbose: bool = True) -> dict:
                 qtext = f"{q['stem']} {q['options'][LETTERS.index(q['correct_letter'])]} {q['official_justification']}"
             else:
                 qtext = q["stem"] + " " + " ".join(q["options"])
-            for rank, (i, sc) in enumerate(bm.top(qtext, 3, allowed)):
+            top = bm.top(qtext, 3, allowed) or bm.top(q["stem"] + " " + " ".join(q["options"]), 3, allowed)
+            for rank, (i, sc) in enumerate(top):
                 theory_links.append((q["id"], chunk_rows[i][0], rank, round(sc, 3)))
 
     # --- 6. temas: títulos

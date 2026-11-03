@@ -1,20 +1,21 @@
 {
-  "generado": "2026-11-02T10:46:39",
+  "generado": "2026-11-03T16:43:26",
   "temas_detectados": 12,
-  "documentos": 104,
+  "documentos": 107,
   "documentos_por_tipo": {
+    "documento": 1,
     "equivalencias": 1,
     "esquema": 66,
-    "soluciones": 11,
+    "soluciones": 12,
     "supuesto": 1,
     "teoria": 13,
-    "test": 12
+    "test": 13
   },
-  "test_originales": 12,
-  "preguntas_totales": 530,
-  "preguntas_unicas": 529,
-  "grupos_sin_duplicados_aprox": 524,
-  "preguntas_verificadas": 503,
+  "test_originales": 13,
+  "preguntas_totales": 550,
+  "preguntas_unicas": 549,
+  "grupos_sin_duplicados_aprox": 544,
+  "preguntas_verificadas": 523,
   "preguntas_pendientes": 25,
   "preguntas_con_contradiccion": 1,
   "apartados_teoria": 362,
@@ -71,8 +72,8 @@
     {
       "tema": "A1-T07",
       "nombre": "El personal de las Entidades Locales (TREBEP)",
-      "preguntas": 0,
-      "verificadas": 0,
+      "preguntas": 20,
+      "verificadas": 20,
       "apartados_teoria": 33,
       "esquemas": 8
     },
@@ -190,6 +191,15 @@
       "n_verified": 50
     },
     {
+      "id": "T:Benicasim/TEMA 7/Test Tema 7.pdf",
+      "topic_id": "A1-T07",
+      "name": "Test Tema 7",
+      "doc_id": "Benicasim/TEMA 7/Test Tema 7.pdf",
+      "solution_doc_id": "Benicasim/TEMA 7/Soluciones Test Tema 7.pdf",
+      "n_questions": 20,
+      "n_verified": 20
+    },
+    {
       "id": "T:Benicasim/TEMA 8/Test Tema 8.pdf",
       "topic_id": "A1-T08",
       "name": "Test Tema 8",
@@ -241,6 +251,12 @@
       "doc_id": "Caso practico/Practica 1.pdf",
       "question_id": null,
       "detail": "El test «Practica 1.pdf» no tiene solucionario: sus 25 preguntas quedan pendientes de revisión."
+    },
+    {
+      "kind": "documento_ilegible",
+      "doc_id": "Resumen/PARTE 2.pdf",
+      "question_id": null,
+      "detail": "PDF sin páginas legibles (archivo dañado o incompleto); se omite"
     },
     {
       "kind": "duplicado_exacto",
@@ -611,10 +627,22 @@
       "pages": 10
     },
     {
+      "id": "Benicasim/TEMA 7/Soluciones Test Tema 7.pdf",
+      "kind": "soluciones",
+      "topic_id": "A1-T07",
+      "pages": 5
+    },
+    {
       "id": "Benicasim/TEMA 7/Tema 7.pdf",
       "kind": "teoria",
       "topic_id": "A1-T07",
       "pages": 24
+    },
+    {
+      "id": "Benicasim/TEMA 7/Test Tema 7.pdf",
+      "kind": "test",
+      "topic_id": "A1-T07",
+      "pages": 5
     },
     {
       "id": "Benicasim/TEMA 8/Soluciones Test Tema 8.pdf",
@@ -1059,6 +1087,12 @@
       "kind": "esquema",
       "topic_id": "A2-T02",
       "pages": 1
+    },
+    {
+      "id": "Resumen/PARTE 1.pdf",
+      "kind": "documento",
+      "topic_id": null,
+      "pages": 20
     }
   ]
 }

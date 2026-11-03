@@ -64,7 +64,35 @@ def _pull() -> None:
         with urllib.request.urlopen(req, timeout=120) as r:
             data = r.read()
     with db._lock:
-        db.get_db_path().write_bytes(data)
+        path = db.get_db_path()
+        bundled = path.with_suffix(".bundled.db")
+        bundled.write_bytes(path.read_bytes())  # banco de preguntas de la versión desplegada
+        path.write_bytes(data)                  # progreso del usuario (repo privado)
+        _refresh_bank(bundled)
+        bundled.unlink(missing_ok=True)
+
+
+def _refresh_bank(bundled) -> None:
+    """Sustituye las tablas del banco (preguntas, temas…) por las de la versión desplegada,
+    conservando intactas las tablas de progreso del usuario."""
+    db.init_db()
+    con = sqlite3.connect(db.get_db_path())
+    try:
+        con.execute("PRAGMA foreign_keys=OFF")
+        con.execute("ATTACH DATABASE ? AS b", (str(bundled),))
+        if not con.execute("SELECT COUNT(*) FROM b.questions").fetchone()[0]:
+            return
+        for t in db.BANK_TABLES:
+            cols = [r[1] for r in con.execute(f"PRAGMA main.table_info({t})")]
+            bcols = {r[1] for r in con.execute(f"PRAGMA b.table_info({t})")}
+            common = ",".join(c for c in cols if c in bcols)
+            con.execute(f"DELETE FROM main.{t}")
+            con.execute(f"INSERT INTO main.{t}({common}) SELECT {common} FROM b.{t}")
+        con.commit()
+        con.execute("DETACH DATABASE b")
+    finally:
+        con.close()
+    _dirty.set()
 
 
 def _snapshot() -> bytes:

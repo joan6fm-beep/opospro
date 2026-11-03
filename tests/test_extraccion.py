@@ -8,9 +8,9 @@ from core.extract.test_parser import normalize
 def test_inventario_basico():
     inv = ingest.build_inventory()
     assert inv["temas_detectados"] == 12
-    assert inv["test_originales"] == 12
-    assert inv["preguntas_totales"] == 530
-    assert inv["preguntas_verificadas"] == 503
+    assert inv["test_originales"] == 13
+    assert inv["preguntas_totales"] == 550
+    assert inv["preguntas_verificadas"] == 523
     assert inv["preguntas_pendientes"] == 25          # Práctica 1 sin solucionario
     assert inv["preguntas_con_contradiccion"] == 1    # Tema 9 nº 14 (ambigua según el propio solucionario)
 
@@ -19,7 +19,7 @@ def test_numero_preguntas_y_opciones_por_test():
     for t in db.query("SELECT * FROM tests"):
         n = db.scalar("SELECT COUNT(*) FROM question_sources WHERE test_id=?", (t["id"],))
         assert n == t["n_questions"]
-        expected = 30 if "Parte 2" in t["doc_id"] else 25 if ("TEMA 9" in t["doc_id"] or "Practica" in t["doc_id"]) else 50
+        expected = 30 if "Parte 2" in t["doc_id"] else 20 if "TEMA 7/" in t["doc_id"] else 25 if ("TEMA 9" in t["doc_id"] or "Practica" in t["doc_id"]) else 50
         assert n == expected, t["doc_id"]
     for q in db.query("SELECT options_json, stem FROM questions"):
         opts = json.loads(q["options_json"])
@@ -78,7 +78,8 @@ def test_clasificacion_por_temas():
     assert t["A2-T01"]["folder"].endswith("TEMA 11") and t["A2-T02"]["folder"].endswith("TEMA 12")
     assert len(bank.question_ids_for_topics(["A1-T01"])) == 79
     assert len(bank.question_ids_for_topics(["A1-T09"])) == 24
-    assert bank.question_ids_for_topics(["A1-T07"]) == []  # tema sin test
+    assert len(bank.question_ids_for_topics(["A1-T07"])) == 20
+    assert bank.question_ids_for_topics(["A1-T10"]) == []  # tema sin test
     assert db.scalar("SELECT COUNT(*) FROM esquemas WHERE topic_id='A1-T03'") == 7
     assert db.scalar("SELECT COUNT(*) FROM esquemas WHERE topic_id IS NULL") == 0
 
