@@ -118,7 +118,7 @@ def _normalize_key(key: str) -> str:
     """Reconstruye la clave PEM aunque al pegarla en Secrets se hayan perdido los saltos de línea
     (o se hayan escrito como «\n» literales)."""
     import re
-    k = key.strip().replace(chr(13), "").replace(chr(92) + "n", chr(10))
+    k = key.strip().replace(chr(13), "").replace(chr(92) + "n", chr(10)).strip().strip("'\"").strip()
     m = re.search(r"(-----BEGIN [A-Z ]+-----)(.*?)(-----END [A-Z ]+-----)", k, re.S)
     if not m:
         return k + chr(10)
