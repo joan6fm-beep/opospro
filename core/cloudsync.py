@@ -45,7 +45,7 @@ def status() -> dict:
 def _publish_status() -> None:
     """Estado sin datos sensibles en static/sync-status.json (permite comprobar la nube desde fuera)."""
     try:
-        info = {k: _status.get(k) for k in ("active", "pulling", "last_pull", "last_ok", "timings", "key_fingerprint",
+        info = {k: _status.get(k) for k in ("active", "pulling", "last_pull", "last_ok", "timings", "key_fingerprint", "key_shape",
                                              "git_url")}
         info["error"] = bool(_status["last_error"])
         info["error_msg"] = (_status["last_error"] or "")[:900]
@@ -127,6 +127,17 @@ def _normalize_key(key: str) -> str:
     return chr(10).join([m.group(1), *lines, m.group(3)]) + chr(10)
 
 
+def _key_shape(key: str) -> dict:
+    """Forma de la clave pegada en Secrets, SIN su contenido: detecta clave pública, cortada o sin cabeceras."""
+    import re
+    k = key.strip()
+    body = re.sub(r"-----[A-Z ]+-----|\s|\\n", "", k)
+    return {"chars": len(k), "lines": k.count(chr(10)) + 1, "begin": "-----BEGIN OPENSSH PRIVATE KEY-----" in k,
+            "end": "-----END OPENSSH PRIVATE KEY-----" in k, "body_chars": len(body),
+            "is_public_key": k.startswith(("ssh-ed25519", "ssh-rsa", "ecdsa-")),
+            "base64_ok": bool(re.fullmatch(r"[A-Za-z0-9+/=]*", body))}
+
+
 def _ssh_cmd(kf: Path, kh: Path) -> str:
     return (f'ssh -i "{kf.as_posix()}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o BatchMode=yes '
             f'-o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 '
@@ -146,6 +157,7 @@ def _setup_git(key: str) -> None:
     urls = [custom] if custom else [f"ssh://git@ssh.github.com:443/{_cfg['repo']}.git",
                                     f"git@github.com:{_cfg['repo']}.git"]
     _cfg.update(dir=str(d / "repo"), env=env, url=urls[0], urls=urls, key_file=str(kf))
+    _status["key_shape"] = _key_shape(key)
     try:  # huella de la clave pública (no es secreta): permite comprobar que la clave pegada es la correcta
         out = subprocess.run(["ssh-keygen", "-lf", str(kf)], capture_output=True, text=True, timeout=10)
         if out.returncode == 0:
@@ -158,6 +170,13 @@ def _setup_git(key: str) -> None:
 
 def _clone(d: Path, br: str) -> None:
     """Clona probando cada dirección; el error incluye la salida de git/ssh (nunca contiene la clave)."""
+    if str(_status.get("key_fingerprint", "")).startswith("clave no válida"):
+        sh = _status.get("key_shape") or {}
+        raise RuntimeError(
+            "la clave DATA_DEPLOY_KEY guardada en los Secrets de esta app no es una clave privada válida "
+            f"({sh.get('chars')} caracteres, {sh.get('lines')} líneas, cabecera BEGIN {'sí' if sh.get('begin') else 'NO'}, "
+            f"END {'sí' if sh.get('end') else 'NO'}{', es la clave PÚBLICA' if sh.get('is_public_key') else ''}; "
+            "la correcta tiene 418 caracteres y 7 líneas). Pégala completa de nuevo en Settings → Secrets")
     errors = []
     for url in [u for u in (_cfg.get("urls") or [_cfg["url"]]) for _ in range(3)]:  # 3 intentos por dirección
         try:
