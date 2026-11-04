@@ -157,6 +157,7 @@ def _setup_git(key: str) -> None:
     urls = [custom] if custom else [f"ssh://git@ssh.github.com:443/{_cfg['repo']}.git",
                                     f"git@github.com:{_cfg['repo']}.git"]
     _cfg.update(dir=str(d / "repo"), env=env, url=urls[0], urls=urls, key_file=str(kf))
+    _cfg["raw_key"] = key
     _status["key_shape"] = _key_shape(key)
     try:  # huella de la clave pública (no es secreta): permite comprobar que la clave pegada es la correcta
         out = subprocess.run(["ssh-keygen", "-lf", str(kf)], capture_output=True, text=True, timeout=10)
@@ -355,6 +356,12 @@ def _pull_loop() -> None:
             print(f"[cloudsync] {_status['last_error']}")
             _publish_status()
             time.sleep((5, 15, 30, 60)[min(i, 3)])
+            try:  # si la clave se corrige en Secrets con la app en marcha, se usa la nueva sin reiniciar
+                key = _secret("DATA_DEPLOY_KEY")
+                if key and _cfg.get("env") and key != _cfg.get("raw_key"):
+                    _setup_git(key)
+            except Exception:  # noqa: BLE001
+                pass
 
 
 def start(background: bool = False) -> bool:
