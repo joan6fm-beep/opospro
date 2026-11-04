@@ -116,3 +116,4 @@ if forced in RENDERERS:
     RENDERERS[forced]()
 else:
     selected.run()
+nav.prefetch_widgets()

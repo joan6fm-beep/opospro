@@ -56,6 +56,40 @@ def _cgroup() -> dict:
     return d
 
 
+def _procs() -> dict:
+    """Procesos del contenedor (detecta git/ssh colgados o zombis acumulados)."""
+    out: dict = {"total": 0, "zombies": 0, "names": {}}
+    try:
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit():
+                continue
+            st = _read(f"/proc/{pid}/stat")
+            if not st:
+                continue
+            name = st[st.find("(") + 1:st.rfind(")")]
+            state = st[st.rfind(")") + 2:st.rfind(")") + 3]
+            out["total"] += 1
+            out["zombies"] += state == "Z"
+            out["names"][name] = out["names"].get(name, 0) + 1
+    except Exception:  # noqa: BLE001
+        pass
+    return out
+
+
+def _tcp() -> dict:
+    """Conexiones TCP por estado (CLOSE_WAIT acumuladas = conexiones mal cerradas)."""
+    names = {"01": "ESTABLISHED", "06": "TIME_WAIT", "08": "CLOSE_WAIT", "0A": "LISTEN", "04": "FIN_WAIT1",
+             "05": "FIN_WAIT2", "09": "LAST_ACK", "02": "SYN_SENT", "03": "SYN_RECV"}
+    out: dict = {}
+    for f in ("/proc/net/tcp", "/proc/net/tcp6"):
+        for line in (_read(f) or "").splitlines()[1:]:
+            parts = line.split()
+            if len(parts) > 3:
+                k = names.get(parts[3], parts[3])
+                out[k] = out.get(k, 0) + 1
+    return out
+
+
 def _sessions() -> int | None:
     try:
         from streamlit.runtime import Runtime
@@ -95,7 +129,7 @@ def _loop() -> None:
                     "updated": time.strftime("%H:%M:%S", time.gmtime()), "self_health": {
                         "n": n, "fails": fails, "worst_s": worst, "last": probes},
                     "sessions": _sessions(), "threads": [t.name for t in threading.enumerate()],
-                    "proc": _proc_status(), "cgroup": _cgroup(),
+                    "proc": _proc_status(), "cgroup": _cgroup(), "procs": _procs(), "tcp": _tcp(),
                     "load": _read("/proc/loadavg")}
             _OUT.parent.mkdir(exist_ok=True)
             tmp = _OUT.with_suffix(".tmp")

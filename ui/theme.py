@@ -125,6 +125,7 @@ div[data-testid="stMetricValue"] { font-weight: 750; }
 
 
 SIDEBAR_CSS = """<style>
+.st-key-prefetch{display:none !important}
 [data-testid="stSidebarContent"]{display:flex;flex-direction:column}
 [data-testid="stSidebarUserContent"]{order:-1;padding-top:.5rem;padding-bottom:0}
 </style>"""

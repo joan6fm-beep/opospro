@@ -87,3 +87,31 @@ def wait_for_sync() -> None:
         if not s["pulling"] or s["last_error"]:
             st.rerun(scope="app")
     _poll()
+
+
+def prefetch_widgets() -> None:
+    """Precarga oculta del código de los formularios (Simulacros, Hacer test, examen…).
+
+    El navegador descarga el JavaScript de cada tipo de control la primera vez que aparece (unos 30 ficheros
+    para el formulario de Simulacros). Al dibujarlos ocultos tras la primera página, se descargan en segundo
+    plano y quedan en la caché del navegador: abrir Simulacros después ya no espera a la red.
+    Solo en las primeras ejecuciones de cada sesión; no guarda nada."""
+    n = st.session_state.get("_prefetch_runs", 0)
+    if n >= 2:
+        return
+    st.session_state["_prefetch_runs"] = n + 1
+    with st.sidebar.container(key="prefetch"):
+        st.number_input("pf", key="_pf_num", label_visibility="collapsed")
+        st.multiselect("pf", ["a"], key="_pf_multi", label_visibility="collapsed")
+        st.selectbox("pf", ["a"], key="_pf_sel", label_visibility="collapsed")
+        st.radio("pf", ["a"], key="_pf_radio", label_visibility="collapsed")
+        st.segmented_control("pf", ["a"], key="_pf_seg", label_visibility="collapsed")
+        st.toggle("pf", key="_pf_toggle")
+        st.select_slider("pf", options=[0, 1], key="_pf_slider", label_visibility="collapsed")
+        st.progress(0)
+        with st.form("_pf_form"):
+            st.form_submit_button("pf")
+        with st.expander("pf"):
+            st.empty()
+        st.tabs(["pf"])
+        st.iframe("<p></p>", height=1, width=1)

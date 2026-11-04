@@ -96,8 +96,22 @@ GITHUB_HOST_KEY = "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0Sd
 
 
 def _git(*args: str, cwd=None) -> str:
-    return subprocess.run(["git", *args], cwd=cwd or _cfg["dir"], env=_cfg["env"], capture_output=True, text=True,
-                          timeout=60, check=True).stdout  # nunca esperar indefinidamente
+    """git con tiempo máximo; si se agota, mata también el ssh hijo (no deja procesos colgados)."""
+    p = subprocess.Popen(["git", *args], cwd=cwd or _cfg["dir"], env=_cfg["env"], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, text=True, start_new_session=os.name != "nt")
+    try:
+        out, err = p.communicate(timeout=60)
+    except subprocess.TimeoutExpired:
+        if os.name != "nt":
+            import signal
+            os.killpg(p.pid, signal.SIGKILL)
+        else:
+            p.kill()
+        p.communicate()
+        raise
+    if p.returncode:
+        raise subprocess.CalledProcessError(p.returncode, ["git", args[0]], out, err)
+    return out
 
 
 def _normalize_key(key: str) -> str:
@@ -145,7 +159,7 @@ def _setup_git(key: str) -> None:
 def _clone(d: Path, br: str) -> None:
     """Clona probando cada dirección; el error incluye la salida de git/ssh (nunca contiene la clave)."""
     errors = []
-    for url in _cfg.get("urls") or [_cfg["url"]]:
+    for url in [u for u in (_cfg.get("urls") or [_cfg["url"]]) for _ in range(3)]:  # 3 intentos por dirección
         try:
             _git("clone", "-q", "--depth", "1", "--branch", br, url, str(d), cwd=d.parent)
             _cfg["url"] = url
