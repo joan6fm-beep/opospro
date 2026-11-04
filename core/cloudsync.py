@@ -105,12 +105,14 @@ def _setup_git(key: str) -> None:
     kf, kh = d / "key", d / "known_hosts"
     kf.write_bytes((key.strip().replace(chr(13), "") + chr(10)).encode())
     kf.chmod(0o600)
-    kh.write_text(GITHUB_HOST_KEY + chr(10))
+    kh.write_text(GITHUB_HOST_KEY + chr(10) + GITHUB_HOST_KEY.replace("github.com", "[ssh.github.com]:443", 1) + chr(10))
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0",
                GIT_SSH_COMMAND=f'ssh -i "{kf.as_posix()}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes '
                                f'-o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 '
                                f'-o UserKnownHostsFile="{kh.as_posix()}"')
-    _cfg.update(dir=str(d / "repo"), env=env, url=_secret("DATA_GIT_URL") or f"git@github.com:{_cfg['repo']}.git")
+    # SSH por el puerto 443 (ssh.github.com): funciona también donde el puerto 22 está cerrado (Hugging Face)
+    _cfg.update(dir=str(d / "repo"), env=env,
+                url=_secret("DATA_GIT_URL") or f"ssh://git@ssh.github.com:443/{_cfg['repo']}.git")
 
 
 def _git_api(method: str, body: dict | None = None):

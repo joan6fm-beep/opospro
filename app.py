@@ -18,6 +18,32 @@ theme.inject()
 theme.plotly_template()
 
 
+def _password_gate() -> None:
+    """Contraseña de acceso si existe el secret APP_PASSWORD (p. ej. en Hugging Face, app pública)."""
+    import hmac
+    import os
+    pwd = os.environ.get("APP_PASSWORD")
+    if not pwd:
+        try:
+            pwd = st.secrets.get("APP_PASSWORD")
+        except Exception:  # noqa: BLE001 - sin secrets.toml
+            pwd = None
+    if not pwd or st.session_state.get("_auth_ok"):
+        return
+    st.markdown("### 📘 OposPro")
+    with st.form("login"):
+        given = st.text_input("Contraseña", type="password")
+        if st.form_submit_button("Entrar", type="primary"):
+            if hmac.compare_digest(given.encode(), str(pwd).encode()):
+                st.session_state["_auth_ok"] = True
+                st.rerun()
+            st.error("Contraseña incorrecta")
+    st.stop()
+
+
+_password_gate()
+
+
 @st.cache_resource(show_spinner="Preparando el banco de preguntas (solo la primera vez)…")
 def _bootstrap() -> bool:
     if db.bank_is_empty():
