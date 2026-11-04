@@ -13,6 +13,7 @@ import os
 import sqlite3
 import tempfile
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
@@ -28,7 +29,8 @@ _cfg: dict | None = None
 _sha: str | None = None
 _dirty = threading.Event()
 _started = False
-_status = {"active": False, "last_pull": None, "last_ok": None, "last_error": None, "secrets_error": None}
+_status = {"active": False, "pulling": False, "last_pull": None, "last_ok": None, "last_error": None,
+           "secrets_error": None, "timings": {}}
 
 
 def _now() -> str:
@@ -37,13 +39,13 @@ def _now() -> str:
 
 def status() -> dict:
     """Estado de la sincronización: active=False si faltan los secrets o falló la descarga inicial."""
-    return dict(_status, repo=_cfg["repo"] if _cfg else None, pending=_dirty.is_set())
+    return dict({"pulling": False, "timings": {}}, **_status, repo=_cfg["repo"] if _cfg else None, pending=_dirty.is_set())
 
 
 def _publish_status() -> None:
     """Estado sin datos sensibles en static/sync-status.json (permite comprobar la nube desde fuera)."""
     try:
-        info = {k: _status[k] for k in ("active", "last_pull", "last_ok")}
+        info = {k: _status.get(k) for k in ("active", "pulling", "last_pull", "last_ok", "timings")}
         info["error"] = bool(_status["last_error"])
         info["error_msg"] = (_status["last_error"] or "")[:300]
         info["secrets"] = secrets_found()
@@ -94,7 +96,7 @@ GITHUB_HOST_KEY = "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0Sd
 
 def _git(*args: str, cwd=None) -> str:
     return subprocess.run(["git", *args], cwd=cwd or _cfg["dir"], env=_cfg["env"], capture_output=True, text=True,
-                          timeout=180, check=True).stdout
+                          timeout=60, check=True).stdout  # nunca esperar indefinidamente
 
 
 def _setup_git(key: str) -> None:
@@ -106,6 +108,7 @@ def _setup_git(key: str) -> None:
     kh.write_text(GITHUB_HOST_KEY + chr(10))
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0",
                GIT_SSH_COMMAND=f'ssh -i "{kf.as_posix()}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes '
+                               f'-o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 '
                                f'-o UserKnownHostsFile="{kh.as_posix()}"')
     _cfg.update(dir=str(d / "repo"), env=env, url=_secret("DATA_GIT_URL") or f"git@github.com:{_cfg['repo']}.git")
 
@@ -217,10 +220,18 @@ def _push() -> None:
     _sha = _call("PUT", body)["content"]["sha"]
 
 
+def _superseded() -> bool:
+    """True si Streamlit recargó este módulo tras un despliegue: el hilo antiguo debe dejar paso al nuevo."""
+    m = sys.modules.get(__name__)
+    return m is None or m.__dict__ is not globals()
+
+
 def _worker() -> None:
     while True:
         _dirty.wait()
         time.sleep(DELAY_S)
+        if _superseded():
+            return
         _dirty.clear()
         try:
             _push()
@@ -234,21 +245,58 @@ def _worker() -> None:
             time.sleep(60)
 
 
-def start() -> bool:
-    """Descarga la base de datos y activa la subida automática. Devuelve True si está activo."""
+def _timed_pull() -> None:
+    t = time.time()
+    _pull()
+    _status.setdefault("timings", {})["descarga_progreso_s"] = round(time.time() - t, 1)
+
+
+def _activate() -> None:
+    _status.update(active=True, pulling=False, last_pull=_now(), last_error=None)
+    db.init_db()
+    db.add_write_hook(_dirty.set)
+    threading.Thread(target=_worker, daemon=True, name="cloudsync").start()
+    _publish_status()
+
+
+def _pull_loop() -> None:
+    """Descarga en segundo plano con reintentos: la app se abre sin esperar a GitHub.
+    Hasta que la descarga termina bien no se sube nada, así nunca se sobrescribe el progreso guardado."""
+    for i in range(10_000):
+        if _superseded():
+            return
+        try:
+            _timed_pull()
+            _activate()
+            return
+        except Exception as e:  # noqa: BLE001
+            _status["last_error"] = (f"{_now()} · no se pudo recuperar tu progreso de GitHub ({type(e).__name__}: "
+                                     f"{str(e)[:150]}). Reintentando; mientras tanto lo que hagas NO se guarda en GitHub.")
+            print(f"[cloudsync] {_status['last_error']}")
+            _publish_status()
+            time.sleep((5, 15, 30, 60)[min(i, 3)])
+
+
+def start(background: bool = False) -> bool:
+    """Activa la sincronización. Con background=True la descarga inicial no bloquea la interfaz."""
     global _cfg, _started
-    if _status["active"] or (_started and _cfg is not None):
-        return _status["active"]  # ya activa, o falló la descarga (no se reintenta para no sobrescribir)
+    if _status["active"] or _status.get("pulling") or (_started and _cfg is not None):
+        return _status["active"]
     _started = True
     token, key, repo = _secret("GITHUB_TOKEN"), _secret("DATA_DEPLOY_KEY"), _secret("DATA_REPO")
     if not (repo and (token or key)):
         _publish_status()
         return False
     _cfg = {"token": token, "repo": repo, "branch": _secret("DATA_BRANCH") or "main"}
+    if key and not token:
+        _setup_git(key)
+    if background:
+        _status["pulling"] = True
+        _publish_status()
+        threading.Thread(target=_pull_loop, daemon=True, name="cloudsync-pull").start()
+        return False
     try:
-        if key and not token:
-            _setup_git(key)
-        _pull()
+        _timed_pull()
     except Exception as e:  # noqa: BLE001
         # sin la copia de GitHub NO se sube nada: así no se sobrescribe el progreso guardado con datos antiguos
         _status["last_error"] = (f"{_now()} · no se pudo descargar el progreso ({type(e).__name__}: {e}). "
@@ -256,9 +304,5 @@ def start() -> bool:
         print(f"[cloudsync] {_status['last_error']}")
         _publish_status()
         return False
-    _status.update(active=True, last_pull=_now())
-    _publish_status()
-    db.init_db()
-    db.add_write_hook(_dirty.set)
-    threading.Thread(target=_worker, daemon=True, name="cloudsync").start()
+    _activate()
     return True

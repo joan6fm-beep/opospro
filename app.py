@@ -20,14 +20,15 @@ theme.plotly_template()
 
 @st.cache_resource(show_spinner="Preparando el banco de preguntas (solo la primera vez)…")
 def _bootstrap() -> bool:
-    cloudsync.start()  # solo actúa en la nube, con secrets de GitHub
     if db.bank_is_empty():
         ingest.run(verbose=False)
     return True
 
 
 _bootstrap()
-cloudsync.start()  # si los secrets se guardan con la app ya en marcha, se activa sin reiniciar
+# nube: descarga el progreso en segundo plano (la página se muestra sin esperar a GitHub);
+# también activa la sincronización si los secrets se guardan con la app ya en marcha
+cloudsync.start(background=True)
 if "_daily_backup" not in st.session_state:
     try:
         userdata.auto_daily_backup()
@@ -76,6 +77,10 @@ with st.sidebar:
     nav.sync_badge()
 
 selected = st.navigation(pages, position="sidebar", expanded=True)
+_sync = cloudsync.status()
+if _sync["pulling"] and not _sync["last_error"]:
+    nav.wait_for_sync()  # unos segundos: así nada se guarda antes de recuperar el progreso
+    st.stop()
 # Gancho para las pruebas automáticas (AppTest no puede navegar a páginas definidas como funciones)
 forced = st.session_state.get("_test_page")
 if forced in RENDERERS:

@@ -62,6 +62,8 @@ def sync_badge() -> None:
     s = cloudsync.status()
     if s["last_error"]:
         st.error(f"☁️ Error de sincronización con GitHub: {s['last_error']}", icon="⚠️")
+    elif s["pulling"]:
+        st.caption("☁️ Recuperando tu progreso desde GitHub…")
     elif s["active"]:
         when = s["last_ok"] or f"sin cambios nuevos (descargado {s['last_pull']})"
         st.caption(f"☁️ Progreso en GitHub · último guardado: {when}" + (" · guardando…" if s["pending"] else ""))
@@ -73,3 +75,15 @@ def sync_badge() -> None:
                    f"Secrets detectados: {det}{err}", icon="⚠️")
     else:
         st.caption("💻 Progreso guardado solo en este ordenador (no se sube a GitHub).")
+
+
+def wait_for_sync() -> None:
+    st.info("☁️ Recuperando tu progreso desde GitHub… (suele tardar unos segundos)")
+
+    @st.fragment(run_every=2)
+    def _poll() -> None:
+        from core import cloudsync
+        s = cloudsync.status()
+        if not s["pulling"] or s["last_error"]:
+            st.rerun(scope="app")
+    _poll()
