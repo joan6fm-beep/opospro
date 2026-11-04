@@ -53,7 +53,7 @@ def timer_picker(key: str, n_questions: int | None = None) -> int | None:
     return int(mins * 60)
 
 
-@st.fragment(run_every="30s")
+@st.fragment(run_every="60s")
 def sync_badge() -> None:
     """Indicador del guardado del progreso en GitHub (repo privado de datos)."""
     import os

@@ -192,6 +192,12 @@ def _snapshot() -> bytes:
     src, dst = db.connect(), sqlite3.connect(tmp)
     try:
         src.backup(dst)
+        # solo el progreso: el banco de preguntas viene con cada despliegue (_refresh_bank al descargar).
+        # Así cada subida pesa kilobytes en vez de megas (más rápida con datos móviles y el repo no crece).
+        for t in db.BANK_TABLES:
+            dst.execute(f"DELETE FROM {t}")
+        dst.commit()
+        dst.execute("VACUUM")
     finally:
         src.close()
         dst.close()

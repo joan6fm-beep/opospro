@@ -38,21 +38,30 @@ def _finish(eid: int) -> None:
     st.session_state.pop("_tick", None)
 
 
-@st.fragment(run_every=1)
+_TIMER_JS = """<div id="t" style="font:750 1.05rem system-ui,-apple-system,Segoe UI,sans-serif;font-variant-numeric:tabular-nums;
+padding:4px 12px;border-radius:999px;display:inline-block;background:#eef2f8;color:#184f95"></div>
+<script>
+const down = %(down)s; let v = %(start)s; const t0 = Date.now(); const el = document.getElementById("t");
+function draw() {
+  const x = Math.max(0, down ? v - Math.floor((Date.now() - t0) / 1000) : v + Math.floor((Date.now() - t0) / 1000));
+  el.textContent = "⏱ " + String(Math.floor(x / 60)).padStart(2, "0") + ":" + String(x %% 60).padStart(2, "0");
+  if (down && x < 120) { el.style.background = "#fde8e8"; el.style.color = "#a32020"; }
+}
+draw(); setInterval(draw, 1000);
+</script>"""
+
+
+# El reloj cuenta en el navegador (sin pedir nada al servidor cada segundo, clave con datos móviles);
+# el servidor solo comprueba cada 20 s si se agotó el tiempo.
+@st.fragment(run_every=20)
 def _clock(eid: int, limit: int | None, base_elapsed: int, tick_start: float) -> None:
     elapsed = base_elapsed + (time.time() - tick_start)
-    if limit:
-        remaining = limit - elapsed
-        if remaining <= 0:
-            _finish(eid)
-            st.toast("⏰ Tiempo agotado: examen finalizado")
-            st.rerun(scope="app")
-        m, s = divmod(int(remaining), 60)
-        low = " low" if remaining < 120 else ""
-        st.markdown(f'<span class="timer{low}">⏱ {m:02d}:{s:02d}</span>', unsafe_allow_html=True)
-    else:
-        m, s = divmod(int(elapsed), 60)
-        st.markdown(f'<span class="timer">⏱ {m:02d}:{s:02d}</span>', unsafe_allow_html=True)
+    if limit and limit - elapsed <= 0:
+        _finish(eid)
+        st.toast("⏰ Tiempo agotado: examen finalizado")
+        st.rerun(scope="app")
+    start = int(limit - elapsed) if limit else int(elapsed)
+    st.iframe(_TIMER_JS % {"down": "true" if limit else "false", "start": start}, height=38, width=140)
 
 
 # ------------------------------------------------------------------ acciones (callbacks)
@@ -228,7 +237,9 @@ def render() -> None:
         userdata.toggle_favorite(a["question_id"])
         st.rerun()
 
-    with st.expander(f"🗺️ Mapa de preguntas ({answered}/{n} respondidas, {sum(x['flagged'] for x in answers)} marcadas)"):
+    # el mapa (un botón por pregunta) solo se dibuja al abrirlo: con 100 preguntas aligera mucho cada recarga
+    if st.toggle(f"🗺️ Mapa de preguntas ({answered}/{n} respondidas, {sum(x['flagged'] for x in answers)} marcadas)",
+                 key=f"map_open_{eid}"):
         per_row = 10
         for r0 in range(0, n, per_row):
             cols = st.columns(per_row)

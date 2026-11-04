@@ -136,6 +136,8 @@ def inject() -> None:
 
 
 def plotly_template() -> None:
+    if pio.templates.default == "opos":  # ya registrada en este proceso
+        return
     t = go.layout.Template()
     t.layout = go.Layout(
         font=dict(family="system-ui, -apple-system, Segoe UI, sans-serif", color=INK2, size=13),
