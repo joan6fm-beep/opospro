@@ -206,6 +206,8 @@ def _git_api(method: str, body: dict | None = None):
         return {"sha": _git("rev-parse", "HEAD").strip(), "content": base64.b64encode(f.read_bytes()).decode()}
     (d / FILE).write_bytes(base64.b64decode(body["content"]))
     _git("add", FILE)
+    if not _git("status", "--porcelain", "--", FILE).strip():  # sin cambios: nada que subir
+        return {"content": {"sha": _git("rev-parse", "HEAD").strip()}}
     _git("-c", "user.name=OposPro", "-c", "user.email=opospro@users.noreply.github.com", "commit", "-q", "-m", body["message"])
     try:
         _git("push", "-q", "origin", f"HEAD:{br}")
