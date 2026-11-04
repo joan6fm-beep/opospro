@@ -9,7 +9,9 @@ import streamlit as st
 st.set_page_config(page_title="OposPro · Auxiliar Administrativo", page_icon="📘", layout="wide",
                    initial_sidebar_state="auto")
 
-from core import cloudsync, db, ingest, userdata  # noqa: E402
+from core import cloudsync, db, diag, ingest, userdata  # noqa: E402
+
+diag.start()
 from ui import nav, theme  # noqa: E402
 from ui.views import (ajustes, estadisticas, examen, fallos, favoritas, historial, inicio, plan_view,  # noqa: E402
                       resumenes, simulacros, temario, test_aleatorio, test_tema)

@@ -8,3 +8,5 @@ data/cache/
 .env
 .claude/settings.local.json
 static/sync-status.json
+static/diag.json
+static/diag.tmp
