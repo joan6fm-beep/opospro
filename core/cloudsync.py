@@ -45,9 +45,10 @@ def status() -> dict:
 def _publish_status() -> None:
     """Estado sin datos sensibles en static/sync-status.json (permite comprobar la nube desde fuera)."""
     try:
-        info = {k: _status.get(k) for k in ("active", "pulling", "last_pull", "last_ok", "timings")}
+        info = {k: _status.get(k) for k in ("active", "pulling", "last_pull", "last_ok", "timings", "key_fingerprint",
+                                             "git_url")}
         info["error"] = bool(_status["last_error"])
-        info["error_msg"] = (_status["last_error"] or "")[:300]
+        info["error_msg"] = (_status["last_error"] or "")[:900]
         info["secrets"] = secrets_found()
         info["secrets_error"] = _status["secrets_error"]
         info["counts"] = {t: db.scalar(f"SELECT COUNT(*) FROM {t}", default=0) for t in ("exams", "exam_answers", "review_state")}
@@ -99,20 +100,64 @@ def _git(*args: str, cwd=None) -> str:
                           timeout=60, check=True).stdout  # nunca esperar indefinidamente
 
 
+def _normalize_key(key: str) -> str:
+    """Reconstruye la clave PEM aunque al pegarla en Secrets se hayan perdido los saltos de línea
+    (o se hayan escrito como «\n» literales)."""
+    import re
+    k = key.strip().replace(chr(13), "").replace(chr(92) + "n", chr(10))
+    m = re.search(r"(-----BEGIN [A-Z ]+-----)(.*?)(-----END [A-Z ]+-----)", k, re.S)
+    if not m:
+        return k + chr(10)
+    body = re.sub(r"\s+", "", m.group(2))
+    lines = [body[i:i + 70] for i in range(0, len(body), 70)]
+    return chr(10).join([m.group(1), *lines, m.group(3)]) + chr(10)
+
+
+def _ssh_cmd(kf: Path, kh: Path) -> str:
+    return (f'ssh -i "{kf.as_posix()}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o BatchMode=yes '
+            f'-o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 '
+            f'-o UserKnownHostsFile="{kh.as_posix()}"')
+
+
 def _setup_git(key: str) -> None:
     """Clave de despliegue (solo da acceso a DATA_REPO): se usa git por SSH, sin tokens."""
     d = Path(tempfile.mkdtemp(prefix="opos_sync_"))
     kf, kh = d / "key", d / "known_hosts"
-    kf.write_bytes((key.strip().replace(chr(13), "") + chr(10)).encode())
+    kf.write_bytes(_normalize_key(key).encode())
     kf.chmod(0o600)
     kh.write_text(GITHUB_HOST_KEY + chr(10) + GITHUB_HOST_KEY.replace("github.com", "[ssh.github.com]:443", 1) + chr(10))
-    env = dict(os.environ, GIT_TERMINAL_PROMPT="0",
-               GIT_SSH_COMMAND=f'ssh -i "{kf.as_posix()}" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes '
-                               f'-o ConnectTimeout=10 -o ServerAliveInterval=10 -o ServerAliveCountMax=3 '
-                               f'-o UserKnownHostsFile="{kh.as_posix()}"')
-    # SSH por el puerto 443 (ssh.github.com): funciona también donde el puerto 22 está cerrado (Hugging Face)
-    _cfg.update(dir=str(d / "repo"), env=env,
-                url=_secret("DATA_GIT_URL") or f"ssh://git@ssh.github.com:443/{_cfg['repo']}.git")
+    env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_SSH_COMMAND=_ssh_cmd(kf, kh))
+    # SSH por el puerto 443 (ssh.github.com) y, si falla, por el 22 (github.com)
+    custom = _secret("DATA_GIT_URL")
+    urls = [custom] if custom else [f"ssh://git@ssh.github.com:443/{_cfg['repo']}.git",
+                                    f"git@github.com:{_cfg['repo']}.git"]
+    _cfg.update(dir=str(d / "repo"), env=env, url=urls[0], urls=urls, key_file=str(kf))
+    try:  # huella de la clave pública (no es secreta): permite comprobar que la clave pegada es la correcta
+        out = subprocess.run(["ssh-keygen", "-lf", str(kf)], capture_output=True, text=True, timeout=10)
+        if out.returncode == 0:
+            _status["key_fingerprint"] = (out.stdout.split() + ["?", "?"])[1]
+        else:
+            _status["key_fingerprint"] = "clave no válida: " + (out.stderr or out.stdout).strip()[-120:]
+    except Exception as e:  # noqa: BLE001
+        _status["key_fingerprint"] = f"no comprobada ({type(e).__name__})"
+
+
+def _clone(d: Path, br: str) -> None:
+    """Clona probando cada dirección; el error incluye la salida de git/ssh (nunca contiene la clave)."""
+    errors = []
+    for url in _cfg.get("urls") or [_cfg["url"]]:
+        try:
+            _git("clone", "-q", "--depth", "1", "--branch", br, url, str(d), cwd=d.parent)
+            _cfg["url"] = url
+            _status["git_url"] = url.split("@")[-1]
+            return
+        except subprocess.CalledProcessError as e:
+            errors.append(f"{url.split('@')[-1]}: {(e.stderr or '').strip()[-220:]}")
+        except subprocess.TimeoutExpired:
+            errors.append(f"{url.split('@')[-1]}: sin respuesta en 60 s")
+        import shutil
+        shutil.rmtree(d, ignore_errors=True)
+    raise RuntimeError("git clone falló · " + " | ".join(errors))
 
 
 def _git_api(method: str, body: dict | None = None):
@@ -120,7 +165,7 @@ def _git_api(method: str, body: dict | None = None):
     d, br = Path(_cfg["dir"]), _cfg["branch"]
     if method == "GET":
         if not d.exists():
-            _git("clone", "-q", "--depth", "1", "--branch", br, _cfg["url"], str(d), cwd=d.parent)
+            _clone(d, br)
         f = d / FILE
         if not f.exists():
             raise urllib.error.HTTPError(_cfg["url"], 404, "no existe", {}, None)
@@ -273,7 +318,7 @@ def _pull_loop() -> None:
             return
         except Exception as e:  # noqa: BLE001
             _status["last_error"] = (f"{_now()} · no se pudo recuperar tu progreso de GitHub ({type(e).__name__}: "
-                                     f"{str(e)[:150]}). Reintentando; mientras tanto lo que hagas NO se guarda en GitHub.")
+                                     f"{str(e)[:600]}). Reintentando; mientras tanto lo que hagas NO se guarda en GitHub.")
             print(f"[cloudsync] {_status['last_error']}")
             _publish_status()
             time.sleep((5, 15, 30, 60)[min(i, 3)])
