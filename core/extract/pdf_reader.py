@@ -6,7 +6,17 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-import pymupdf
+
+class _LazyPyMuPDF:
+    """PyMuPDF solo se importa al leer un PDF: importarlo cuesta ~2 s y mucha memoria (incluye onnxruntime en la
+    versión 2), y la app normal (tests, simulacros, estadísticas) no lo necesita."""
+
+    def __getattr__(self, name):
+        import pymupdf as _m
+        return getattr(_m, name)
+
+
+pymupdf = _LazyPyMuPDF()
 
 HEADER_RE = re.compile(r"^p[áa]g\.\s*\d+\s*$", re.I)
 NOISE_RE = re.compile(r"^\[Escriba aquí\]$", re.I)

@@ -196,3 +196,26 @@ def test_copia_y_exportacion(clean_user):
     assert len(userdata.favorite_ids()) == 1
     assert userdata.export_zip()[:2] == b"PK"
     p.unlink()
+
+
+def test_simulacro_tema1_incluye_parte2(clean_user):
+    """Al elegir el Tema 1 en un simulacro entran preguntas de sus dos test (Parte 1 y Parte 2)."""
+    parts = [t for t in bank.tests_for_topic("A1-T01")]
+    assert len(parts) == 2 and any("Parte 2" in t["name"] for t in parts)
+    p2 = next(t for t in parts if "Parte 2" in t["name"])
+    p2_ids = set(bank.test_question_ids(p2["id"]))
+    pool = set(bank.question_ids_for_topics(["A1-T01"]))
+    assert p2_ids and p2_ids <= pool
+    seen = set()
+    for seed in range(5):
+        seen |= set(exams.select_questions(["A1-T01"], 50, exams.SEL_ALL, seed=seed))
+    assert seen & p2_ids
+    eid = exams.create_exam("simulacro", "examen", "S", exams.select_questions(None, 50), None,
+                            exams.Scoring(1, 1 / 3, 0, 10), 3600)
+    ans = exams.get_answers(eid)
+    assert len(ans) == 50
+    for a in ans[:30]:
+        exams.answer(eid, a["position"], a["correct_letter"])
+    res = exams.finish(eid)
+    assert res.correct == 30 and res.blank == 20 and res.grade == 6.0
+    assert exams.history(kind="simulacro")[0]["id"] == eid

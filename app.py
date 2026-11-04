@@ -9,7 +9,7 @@ import streamlit as st
 st.set_page_config(page_title="OposPro · Auxiliar Administrativo", page_icon="📘", layout="wide",
                    initial_sidebar_state="auto")
 
-from core import cloudsync, db, diag, ingest, userdata  # noqa: E402
+from core import cloudsync, db, diag, userdata  # noqa: E402
 
 diag.start()
 from ui import nav, theme  # noqa: E402
@@ -49,6 +49,7 @@ _password_gate()
 @st.cache_resource(show_spinner="Preparando el banco de preguntas (solo la primera vez)…")
 def _bootstrap() -> bool:
     if db.bank_is_empty():
+        from core import ingest  # solo si falta el banco: importa PyMuPDF (lento y pesado)
         ingest.run(verbose=False)
     return True
 

@@ -124,6 +124,19 @@ def tests_for_topic(tid: str) -> list[dict]:
     return [dict(r) for r in db.query("SELECT * FROM tests WHERE topic_id=? ORDER BY ord", (tid,))]
 
 
+@functools.lru_cache(maxsize=2)
+def _tests_by_topic_cached(gen: int) -> dict:
+    out: dict[str, list[str]] = {}
+    for r in db.query("SELECT topic_id, name FROM tests ORDER BY topic_id, ord"):
+        out.setdefault(r["topic_id"], []).append(r["name"])
+    return out
+
+
+def tests_by_topic() -> dict[str, list[str]]:
+    """Nombres de los test de cada tema (p. ej. Tema 1 tiene «Parte 1» y «Parte 2»), cacheado en memoria."""
+    return _tests_by_topic_cached(db.generation())
+
+
 def test_question_ids(test_id: str, scoreable_only: bool = True) -> list[str]:
     sql = "SELECT qs.question_id FROM question_sources qs JOIN questions q ON q.id=qs.question_id WHERE qs.test_id=?"
     if scoreable_only:

@@ -15,6 +15,15 @@ PRESETS = {
 }
 
 
+def _topic_option(t: dict, tests: dict) -> str:
+    """Etiqueta con el nº de preguntas; deja claro que el Tema 1 incluye su Parte 2."""
+    names = tests.get(t["id"], [])
+    extra = ""
+    if len(names) > 1:
+        extra = " · Parte 1 + Parte 2" if any("parte 2" in n.lower() for n in names) else f" · {len(names)} test"
+    return f"{bank.topic_label(t['id'])} ({t['n_scoreable']} preg.{extra})"
+
+
 def render() -> None:
     nav.page_header("Simulacros de examen", "Exámenes cronometrados en modo examen, con puntuación configurable.", "⏱️")
     st.warning("**Simulación.** Tus documentos no incluyen las bases de la convocatoria, así que los criterios de corrección "
@@ -22,12 +31,14 @@ def render() -> None:
     saved = db.get_setting("simulacro", {}) or {}
     tps = bank.topics(include_empty=False)
     ids = [t["id"] for t in tps]
+    tests = bank.tests_by_topic()
+    labels = {t["id"]: _topic_option(t, tests) for t in tps}
     with st.form("sim_form"):
         c1, c2 = st.columns(2)
         n = c1.number_input("Número de preguntas", 5, 500, int(saved.get("n", 50)), step=5)
         mins = c2.number_input("Tiempo máximo (minutos)", 1, 600, int(saved.get("mins", 60)), step=5)
         topics = st.multiselect("Temas incluidos", ids, default=[t for t in saved.get("topics", ids) if t in ids] or ids,
-                                format_func=lambda t: bank.topic_label(t))
+                                format_func=labels.get)
         c3, c4, c5 = st.columns(3)
         pc = c3.number_input("Puntos por acierto", 0.0, 10.0, float(saved.get("correct", 1.0)), step=0.1, format="%.3f")
         names = list(PRESETS)
