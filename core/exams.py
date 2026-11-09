@@ -297,4 +297,5 @@ KIND_LABELS = {
     "simulacro": "Simulacro",
     "repaso": "Repaso inteligente",
     "nuevas": "Preguntas nuevas",
+    "practica": "Práctica de clase",
 }

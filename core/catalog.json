@@ -1,5 +1,5 @@
 {
-  "_comentario": "Ajustes manuales del catálogo. 'short_names' solo cambia la etiqueta visible del tema. 'esquemas_flat' asigna las imágenes de una carpeta sin subcarpetas a cada tema (verificado visualmente leyendo la cabecera de cada imagen). Las imágenes nuevas pueden colocarse en subcarpetas 'Resumen/ANEXO X/TEMA N' y se asignan solas.",
+  "_comentario": "Ajustes manuales del catálogo. 'short_names' solo cambia la etiqueta visible del tema. 'esquemas_flat' asigna las imágenes de una carpeta sin subcarpetas a cada tema (verificado visualmente leyendo la cabecera de cada imagen). Las imágenes nuevas pueden colocarse en subcarpetas 'Resumen/ANEXO X/TEMA N' y se asignan solas. 'test_combinados' une varios test en uno sin repetidas; 'correcciones_enunciado' corrige erratas del solucionario localizando la pregunta por su enunciado; 'practicas' define el apartado Prácticas (si falta el documento, la práctica aparece como pendiente).",
   "short_names": {
     "A1-T01": "La Constitución Española · Igualdad (LO 3/2007)",
     "A1-T02": "Régimen local: el municipio y sus competencias",
@@ -13,21 +13,148 @@
     "A1-T10": "Prevención de Riesgos Laborales (Ley 31/1995)",
     "A2-T01": "El acto administrativo",
     "A2-T02": "Invalidez y revisión de los actos",
-    "CP": "Casos prácticos"
+    "CP": "Prácticas"
   },
   "esquemas_flat": {
     "Resumen/ANEXO I": {
-      "A1-T01": [[1, 7, "Parte 1 · La Constitución Española de 1978"], [8, 11, "Parte 2 · LO 3/2007 de igualdad"]],
-      "A1-T02": [[12, 14, ""]],
-      "A1-T03": [[15, 21, ""]],
-      "A1-T04": [[22, 25, ""]],
-      "A1-T05": [[26, 29, ""]],
-      "A1-T06": [[30, 35, ""]],
-      "A1-T07": [[36, 43, ""]],
-      "A1-T08": [[44, 49, ""]],
-      "A1-T09": [[50, 55, ""]],
-      "A1-T10": [[56, 59, ""]]
+      "A1-T01": [
+        [
+          1,
+          7,
+          "Parte 1 · La Constitución Española de 1978"
+        ],
+        [
+          8,
+          11,
+          "Parte 2 · LO 3/2007 de igualdad"
+        ]
+      ],
+      "A1-T02": [
+        [
+          12,
+          14,
+          ""
+        ]
+      ],
+      "A1-T03": [
+        [
+          15,
+          21,
+          ""
+        ]
+      ],
+      "A1-T04": [
+        [
+          22,
+          25,
+          ""
+        ]
+      ],
+      "A1-T05": [
+        [
+          26,
+          29,
+          ""
+        ]
+      ],
+      "A1-T06": [
+        [
+          30,
+          35,
+          ""
+        ]
+      ],
+      "A1-T07": [
+        [
+          36,
+          43,
+          ""
+        ]
+      ],
+      "A1-T08": [
+        [
+          44,
+          49,
+          ""
+        ]
+      ],
+      "A1-T09": [
+        [
+          50,
+          55,
+          ""
+        ]
+      ],
+      "A1-T10": [
+        [
+          56,
+          59,
+          ""
+        ]
+      ]
     }
   },
-  "correcciones": {}
+  "correcciones": {},
+  "carpetas_tema": {
+    "_comentario": "Carpetas sin número de tema y el tema al que pertenecen (CP = apartado Prácticas)",
+    "Benicasim/PRACTICAS": "CP",
+    "Caso practico": "CP"
+  },
+  "ignorar_documentos": [
+    "Benicasim/PRACTICAS/Test - Clase 03-11-2026.pdf",
+    "Benicasim/PRACTICAS/Test sesion práctica 09-11.pdf"
+  ],
+  "test_combinados": [
+    {
+      "nombre": "Test Tema 7 y 10",
+      "tema": "A1-T07",
+      "documentos": [
+        "Benicasim/TEMA 10/Test Temas 7 y 10.pdf",
+        "Benicasim/TEMA 7/Test Tema 7.pdf"
+      ],
+      "clasificar": {
+        "patron": "LPRL|Ley 31/1995|39/1997|171/2004|Prevenci[oó]n de Riesgos|Delegad[oa]s? de Prevenci|Seguridad y Salud|riesgo grave e inminente|evaluaci[oó]n de riesgos|Autoridad Laboral",
+        "tema_si": "A1-T10",
+        "tema_no": "A1-T07",
+        "documentos": [
+          "Benicasim/TEMA 10/Test Temas 7 y 10.pdf"
+        ]
+      }
+    }
+  ],
+  "correcciones_enunciado": [
+    {
+      "enunciado": "Para adquirir la condición de funcionario de carrera, conforme al artículo 62 del TREBEP",
+      "letra": "c",
+      "motivo": "Art. 62.1.d) TREBEP"
+    },
+    {
+      "enunciado": "cuál es el régimen de la situación de excedencia por cuidado de familiares del artículo 89.4",
+      "letra": "c",
+      "motivo": "Art. 89.4 TREBEP"
+    }
+  ],
+  "practicas": [
+    {
+      "n": 1,
+      "fecha": "06/10/2026",
+      "test": "Benicasim/PRACTICAS/Test - Clase 06-10-2026 (1).pdf"
+    },
+    {
+      "n": 2,
+      "fecha": "13/10/2026",
+      "supuesto": "Benicasim/PRACTICAS/Caso prático 13-10-2026 (2).pdf",
+      "soluciones": "Benicasim/PRACTICAS/Soluciones - Clase 13-10-2026.pdf"
+    },
+    {
+      "n": 3,
+      "fecha": "20/10/2026",
+      "test": "Benicasim/PRACTICAS/Test - Clase 20-10-2026  (1).pdf"
+    },
+    {
+      "n": 4,
+      "fecha": "27/10/2026",
+      "test": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf"
+    }
+  ]
 }

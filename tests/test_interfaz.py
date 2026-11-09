@@ -8,7 +8,7 @@ from core import exams
 
 APP = str(Path(__file__).resolve().parent.parent / "app.py")
 PAGES = ["inicio", "examen", "test", "aleatorio", "fallos", "simulacros", "favoritas", "temario", "resumenes",
-         "plan", "estadisticas", "progreso", "historial", "ajustes"]
+         "plan", "estadisticas", "progreso", "historial", "ajustes", "practicas"]
 
 
 @pytest.mark.parametrize("page", PAGES)
@@ -76,3 +76,40 @@ def test_flujo_examen_finalizar(clean_user):
     assert not at.exception
     assert exams.get_exam(eid)["status"] == "finalizado"
     assert any("Nota" in m.value for m in at.markdown)
+
+
+def test_practicas_flujo(clean_user):
+    from core import bank, db
+    at = AppTest.from_file(APP, default_timeout=90)
+    at.session_state["_test_page"] = "practicas"
+    at.run()
+    assert not at.exception, [e.message for e in at.exception]
+    assert [t.label for t in at.tabs][:4] == ["Práctica 1", "Práctica 2", "Práctica 3", "Práctica 4"]
+    assert any("Hacer práctica (25)" in b.label for b in at.button)
+    assert any("Hacer práctica (29)" in b.label for b in at.button)
+    assert any("no trae solucionario" in w.value for w in at.warning)          # Práctica 4: no se inventan respuestas
+    # iniciar la Práctica 1 crea un examen con sus 25 preguntas en orden
+    at.button(key="pr1_go").click().run()
+    eid = at.session_state["exam_id"]
+    e = exams.get_exam(eid)
+    assert e["kind"] == "practica" and e["n_questions"] == 25
+    t1 = bank.test_by_doc("Benicasim/PRACTICAS/Test - Clase 06-10-2026 (1).pdf")
+    assert [a["question_id"] for a in exams.get_answers(eid)] == bank.test_question_ids(t1["id"])
+    for a in exams.get_answers(eid)[:3]:
+        exams.answer(eid, a["position"], a["correct_letter"])
+    exams.finish(eid)
+    # el resultado aparece en la práctica y en las estadísticas del apartado
+    at2 = AppTest.from_file(APP, default_timeout=90)
+    at2.session_state["_test_page"] = "practicas"
+    at2.run()
+    assert not at2.exception
+    assert any("Resultados anteriores" in m.value for m in at2.markdown)
+    from core import stats
+    row = stats.per_topic().set_index("topic_id").loc["CP"]
+    assert row["aciertos"] == 3
+    # supuesto (Práctica 2): autocorrección guardada
+    at2.segmented_control(key="case2_0_g1").set_value("bien").run()
+    at2.segmented_control(key="case2_0_g2").set_value("regular").run()
+    at2.button(key="case2_save").click().run()
+    h = db.get_setting("practicas_desarrollo")
+    assert h and h[-1]["practica"] == 2 and h[-1]["nota"] == 1.5 and h[-1]["bien"] == 1

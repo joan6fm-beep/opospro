@@ -175,9 +175,8 @@ def render() -> None:
 
 
 def _cases() -> None:
-    st.info("Casos prácticos: el test de «Práctica 1» no tiene solucionario en tus documentos, por eso sus preguntas "
-            "están pendientes de revisión y no puntúan. Puedes leerlas aquí y en «Banco y ajustes» introducir la solución "
-            "si la verificas con tu profesor.")
+    st.info("Prácticas: para hacerlas y corregirlas usa el apartado «🧩 Prácticas» del menú. Aquí puedes leer "
+            "los documentos originales.")
     for d in bank.documents(topic_id="CP"):
         with st.expander(f"📄 {d['id']} ({d['pages']} págs.)"):
             for pg in range(1, d["pages"] + 1):

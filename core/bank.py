@@ -69,9 +69,9 @@ def get_questions(qids: list[str]) -> dict[str, Question]:
 def _topics_cached(gen: int) -> tuple[dict, ...]:
     rows = db.query("""
         SELECT t.*, (SELECT COUNT(DISTINCT qs.question_id) FROM question_sources qs JOIN tests ts ON ts.id=qs.test_id
-                     JOIN questions q ON q.id=qs.question_id WHERE ts.topic_id=t.id AND q.status IN """ + SCOREABLE_SQL + """) AS n_scoreable,
+                     JOIN questions q ON q.id=qs.question_id WHERE q.topic_id=t.id AND q.status IN """ + SCOREABLE_SQL + """) AS n_scoreable,
                (SELECT COUNT(DISTINCT qs.question_id) FROM question_sources qs JOIN tests ts ON ts.id=qs.test_id
-                     WHERE ts.topic_id=t.id) AS n_total,
+                     JOIN questions q ON q.id=qs.question_id WHERE q.topic_id=t.id) AS n_total,
                (SELECT COUNT(*) FROM sections s WHERE s.topic_id=t.id) AS n_sections,
                (SELECT COUNT(*) FROM esquemas e WHERE e.topic_id=t.id) AS n_esquemas
         FROM topics t ORDER BY sort_order""")
@@ -113,7 +113,7 @@ def _qids_cached(gen: int, topic_ids: tuple, scoreable_only: bool) -> tuple[str,
     sql = "SELECT DISTINCT qs.question_id FROM question_sources qs JOIN tests ts ON ts.id=qs.test_id JOIN questions q ON q.id=qs.question_id WHERE 1=1"
     params: list = []
     if topic_ids:
-        sql += f" AND ts.topic_id IN ({','.join('?' * len(topic_ids))})"
+        sql += f" AND q.topic_id IN ({','.join('?' * len(topic_ids))})"
         params += list(topic_ids)
     if scoreable_only:
         sql += " AND q.status IN " + SCOREABLE_SQL
@@ -121,13 +121,23 @@ def _qids_cached(gen: int, topic_ids: tuple, scoreable_only: bool) -> tuple[str,
 
 
 def tests_for_topic(tid: str) -> list[dict]:
-    return [dict(r) for r in db.query("SELECT * FROM tests WHERE topic_id=? ORDER BY ord", (tid,))]
+    """Test del tema, incluidos los combinados que contienen preguntas suyas (p. ej. «Test Tema 7 y 10»)."""
+    return [dict(r) for r in db.query("""SELECT * FROM tests WHERE topic_id=? OR id IN (SELECT qs.test_id FROM question_sources qs
+                                          JOIN questions q ON q.id=qs.question_id WHERE q.topic_id=?) ORDER BY ord""", (tid, tid))]
+
+
+def test_by_doc(doc_id: str) -> dict | None:
+    """Test importado a partir de un documento (comparación insensible a tildes y mayúsculas)."""
+    from .extract.test_parser import normalize
+    key = normalize(doc_id)
+    return next((dict(r) for r in db.query("SELECT * FROM tests") if normalize(r["doc_id"] or "") == key), None)
 
 
 @functools.lru_cache(maxsize=2)
 def _tests_by_topic_cached(gen: int) -> dict:
     out: dict[str, list[str]] = {}
-    for r in db.query("SELECT topic_id, name FROM tests ORDER BY topic_id, ord"):
+    for r in db.query("""SELECT DISTINCT q.topic_id, t.name, t.ord FROM tests t JOIN question_sources qs ON qs.test_id=t.id
+                          JOIN questions q ON q.id=qs.question_id ORDER BY q.topic_id, t.ord"""):
         out.setdefault(r["topic_id"], []).append(r["name"])
     return out
 

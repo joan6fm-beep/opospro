@@ -8,8 +8,9 @@ from ui import nav
 from ui.components import esc, kpi_row
 
 
-def topic_selector(key: str, default: str | None = None, include_empty: bool = False) -> str | None:
-    tps = bank.topics(include_empty=include_empty)
+def topic_selector(key: str, default: str | None = None, include_empty: bool = False,
+                   exclude: tuple[str, ...] = ()) -> str | None:
+    tps = [t for t in bank.topics(include_empty=include_empty) if t["id"] not in exclude]
     if not tps:
         st.warning("No hay temas importados.")
         return None
@@ -23,7 +24,10 @@ def topic_selector(key: str, default: str | None = None, include_empty: bool = F
 
 def render() -> None:
     nav.page_header("Hacer test por tema", "Test originales en su orden y prácticas aleatorias con preguntas reales del tema.", "📝")
-    tid = topic_selector("tema_sel", st.session_state.pop("tema_topic", None))
+    wanted = st.session_state.pop("tema_topic", None)
+    if wanted == "CP":  # las prácticas tienen su propio apartado
+        nav.go("practicas")
+    tid = topic_selector("tema_sel", wanted, exclude=("CP",))
     if not tid:
         return
     t = bank.topic(tid)
@@ -52,7 +56,8 @@ def render() -> None:
         excluded = tt["n_questions"] - len(qids)
         with st.container(border=True):
             c1, c2 = st.columns([4, 1.3], vertical_alignment="center")
-            c1.markdown(f"**{esc(tt['name'])}**  \n{tt['n_questions']} preguntas en el documento · orden original"
+            where = "en el documento" if tt["id"] == f"T:{tt['doc_id']}" else "únicas (test unificado, sin repetidas)"
+            c1.markdown(f"**{esc(tt['name'])}**  \n{tt['n_questions']} preguntas {where} · orden original"
                         + (f" · ⚠️ {excluded} excluida(s) por no tener solución verificable" if excluded else ""))
             if c2.button(f"Hacer test ({len(qids)})", key=f"orig_{tt['id']}", type="primary", width="stretch", disabled=not qids):
                 nav.start_exam("tema_original", mode, tt["name"], qids, [tid], time_limit_s=tl,

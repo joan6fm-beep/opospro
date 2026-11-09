@@ -142,9 +142,20 @@ def detect_topic(folder: Path, docs: list[Path]) -> TopicInfo | None:
     return None
 
 
+DATE_RE = re.compile(r"(\d{1,2})-(\d{1,2})(?:-\d{2,4})?")
+
+
+def _dates(p: Path) -> set[tuple[int, int]]:
+    return {(int(a), int(b)) for a, b in DATE_RE.findall(p.stem)}
+
+
 def pair_solution(test: Path, sols: list[Path]) -> Path | None:
     if not sols:
         return None
+    if _dates(test):  # test de clase con fecha: solo su solucionario de la misma fecha
+        sols = [s for s in sols if _dates(s) & _dates(test)]
+        if not sols:
+            return None
     if len(sols) == 1:
         return sols[0]
     parte = lambda p: re.findall(r"parte \d+", normalize(p.stem))  # «Parte 2» solo con su solucionario
@@ -175,15 +186,27 @@ def run(verbose: bool = True) -> dict:
         doc_rows.append((rel(p), p.name, kind, tid, pages, file_hash(p), p.stat().st_size))
         rep.documents.append({"documento": rel(p), "tipo": kind, "tema": tid, "paginas": pages})
 
+    folder_topics = CATALOG.get("carpetas_tema", {})
+    ignored = {normalize(x) for x in CATALOG.get("ignorar_documentos", [])}
+    seen_hashes: dict[str, str] = {}
+
     # --- 1. carpetas con documentos
     for folder, fl in sorted(by_folder.items()):
-        docs = [f for f in fl if f.suffix.lower() in DOC_EXT]
+        docs = [f for f in fl if f.suffix.lower() in DOC_EXT and normalize(rel(f)) not in ignored]
+        for d in list(docs):
+            h = file_hash(d)
+            if h in seen_hashes:  # copia idéntica de un documento ya importado (p. ej. Caso practico ↔ PRACTICAS)
+                docs.remove(d)
+                rep.issue("documento_duplicado", rel(d), f"Copia idéntica de {seen_hashes[h]}; se importa solo una vez")
+            else:
+                seen_hashes[h] = rel(d)
         for d in [d for d in docs if d.suffix.lower() == ".pdf" and pages_of(d) == 0]:
             docs.remove(d)  # PDF dañado o a medio copiar: se omite sin abortar la importación
             rep.issue("documento_ilegible", rel(d), "PDF sin páginas legibles (archivo dañado o incompleto); se omite")
         imgs = [f for f in fl if f.suffix.lower() in IMG_EXT]
         if docs:
-            tinfo = detect_topic(folder, docs)
+            ft = folder_topics.get(rel(folder))
+            tinfo = TopicInfo(ft, "-", 99, folder=rel(folder)) if ft else detect_topic(folder, docs)
             if tinfo is None:
                 # carpeta sin número de tema (p. ej. "Caso practico")
                 has_tests = any(len(parse_questions(lines_of(d))) >= 5 for d in docs if classify_name(d.name) != "equivalencias")
@@ -191,7 +214,7 @@ def run(verbose: bool = True) -> dict:
                     tinfo = TopicInfo("CP" if "caso" in normalize(folder.name) else "X-" + normalize(folder.name).replace(" ", "-")[:20],
                                       "-", 99, folder=rel(folder))
             if tinfo:
-                topics.setdefault(tinfo.id, tinfo)
+                tinfo = topics.setdefault(tinfo.id, tinfo)
             tid = tinfo.id if tinfo else None
             sols = [d for d in docs if classify_name(d.name) == "soluciones"]
             for d in docs:
@@ -375,6 +398,61 @@ def run(verbose: bool = True) -> dict:
         if q:
             q.update(correct_letter=cfix["letra"], official_justification=cfix["motivo"])
 
+    # correcciones del solucionario identificadas por el enunciado (no por el número, que cambia al unificar test)
+    for cfix in CATALOG.get("correcciones_enunciado", []):
+        frag = normalize(cfix["enunciado"])
+        hits = [q for q in qlist if frag in normalize(q["stem"])]
+        if len(hits) != 1:
+            rep.issue("correccion_no_aplicada", None, f"La corrección «{cfix['enunciado'][:60]}…» coincide con {len(hits)} preguntas")
+            continue
+        q = hits[0]
+        if q["correct_letter"] != cfix["letra"]:
+            q.update(correct_letter=cfix["letra"], official_justification=f"{cfix['motivo']} (corrección del solucionario)",
+                     status="verificada", status_reason="")
+        q["status_reason"] = q["status_reason"] or f"Respuesta comprobada: {cfix['motivo']}"
+
+    # test combinados (varios documentos en un único test, sin preguntas repetidas)
+    combined_ids: set[str] = set()
+    test_rows_all = list(test_rows)
+    for comb in CATALOG.get("test_combinados", []):
+        docs_c = [d for d in comb["documentos"] if any(r[3] == d for r in test_rows)]
+        if not docs_c:
+            continue
+        cid_test = "T:" + comb["nombre"]
+        combined_ids.add(cid_test)
+        old_ids = {"T:" + d for d in docs_c}
+        first = next(r for r in test_rows if r[3] == docs_c[0])
+        by_test = defaultdict(list)
+        for srow in sources:
+            if srow[1] in old_ids:
+                by_test[srow[1]].append(srow)
+        t10 = re.compile(comb.get("clasificar", {}).get("patron", r"$^"), re.I)
+        chosen, groups = [], set()
+        for d in docs_c:
+            for srow in sorted(by_test["T:" + d], key=lambda r: r[2]):
+                q = questions[srow[0]]
+                if q["dup_group"] in groups or any(srow[0] == c[0] for c in chosen):
+                    continue
+                twin = next((c for c in chosen if _near_same(questions[c[0]], q)), None)
+                if twin:
+                    rep.issue("duplicado_unificado", srow[3], f"Pregunta {srow[5]} repetida en {comb['nombre']} "
+                              f"(igual que {twin[3]} nº {twin[5]}); se conserva una sola", srow[0])
+                    continue
+                groups.add(q["dup_group"])
+                chosen.append(srow)
+        for srow in chosen:  # tema de cada pregunta según su contenido (p. ej. LPRL → Tema 10)
+            q = questions[srow[0]]
+            if "clasificar" in comb and srow[3] in comb["clasificar"].get("documentos", comb["documentos"]):
+                blob = " ".join([q["stem"], *q["options"], q["official_justification"] or ""])
+                q["topic_id"] = comb["clasificar"]["tema_si"] if t10.search(blob) else comb["clasificar"]["tema_no"]
+        sources = [r for r in sources if r[1] not in old_ids]
+        sources += [(r[0], cid_test, pos, r[3], r[4], r[5]) for pos, r in enumerate(chosen, 1)]
+        n_ver = sum(1 for r in chosen if questions[r[0]]["status"].startswith("verificada"))
+        test_rows = [r for r in test_rows if r[0] not in old_ids]
+        test_rows.append((cid_test, comb.get("tema", first[1]), comb["nombre"], first[3], first[4], len(chosen), n_ver,
+                          min(r[7] for r in test_rows_all if r[0] in old_ids)))
+    test_rows.sort(key=lambda r: r[7])
+
     # --- 4. teoría: apartados y párrafos
     section_rows, chunk_rows = [], []
     sid = cid = 0
@@ -393,7 +471,7 @@ def run(verbose: bool = True) -> dict:
     q_topics: dict[str, set] = defaultdict(set)
     test_topic = {r[0]: r[1] for r in test_rows}
     for qid, test_id, *_ in sources:
-        q_topics[qid].add(test_topic[test_id])
+        q_topics[qid].add(questions[qid]["topic_id"] if test_id in combined_ids else test_topic[test_id])
     theory_links = []
     if chunk_rows:
         sec_title = {s[0]: s[4] for s in section_rows}
@@ -415,7 +493,7 @@ def run(verbose: bool = True) -> dict:
     topic_rows = []
     for t in topics.values():
         if t.id == "CP":
-            t.title = "Ejercicios de clase práctica (test y supuesto de desarrollo)"
+            t.title = "Prácticas de clase: test y supuesto de desarrollo"
         else:
             t.title = " · ".join(dict.fromkeys(ttl for _, ttl in sorted(t.titles))) or t.id
         short = CATALOG.get("short_names", {}).get(t.id) or t.title[:60]
@@ -446,6 +524,17 @@ def run(verbose: bool = True) -> dict:
     if verbose:
         print(inventory_markdown(inv))
     return inv
+
+
+def _near_same(a: dict, b: dict) -> bool:
+    """Misma pregunta con pequeñas diferencias de redacción: enunciado casi igual y misma respuesta correcta."""
+    sa, sb = normalize(a["stem"]), normalize(b["stem"])
+    r = difflib.SequenceMatcher(None, sa, sb).ratio()
+    if r >= 0.9:
+        return True
+    ca = a["options"][LETTERS.index(a["correct_letter"])] if a["correct_letter"] else ""
+    cb = b["options"][LETTERS.index(b["correct_letter"])] if b["correct_letter"] else ""
+    return r >= 0.75 and bool(ca) and difflib.SequenceMatcher(None, normalize(ca), normalize(cb)).ratio() >= 0.85
 
 
 # --------------------------------------------------------------------------- inventario
