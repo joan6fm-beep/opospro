@@ -13,7 +13,7 @@
     "A1-T10": "Prevención de Riesgos Laborales (Ley 31/1995)",
     "A2-T01": "El acto administrativo",
     "A2-T02": "Invalidez y revisión de los actos",
-    "CP": "Prácticas"
+    "CP": "Prácticas y exámenes de clase"
   },
   "esquemas_flat": {
     "Resumen/ANEXO I": {
@@ -100,10 +100,7 @@
     "Benicasim/PRACTICAS": "CP",
     "Caso practico": "CP"
   },
-  "ignorar_documentos": [
-    "Benicasim/PRACTICAS/Test - Clase 03-11-2026.pdf",
-    "Benicasim/PRACTICAS/Test sesion práctica 09-11.pdf"
-  ],
+  "ignorar_documentos": [],
   "test_combinados": [
     {
       "nombre": "Test Tema 7 y 10",
@@ -138,23 +135,50 @@
     {
       "n": 1,
       "fecha": "06/10/2026",
-      "test": "Benicasim/PRACTICAS/Test - Clase 06-10-2026 (1).pdf"
+      "nombre": "Test clase",
+      "test": "Benicasim/PRACTICAS/1. Test Clase 06-10-2026 (1).pdf"
     },
     {
       "n": 2,
       "fecha": "13/10/2026",
-      "supuesto": "Benicasim/PRACTICAS/Caso prático 13-10-2026 (2).pdf",
-      "soluciones": "Benicasim/PRACTICAS/Soluciones - Clase 13-10-2026.pdf"
+      "nombre": "Supuesto práctico «Villaverde del Río»",
+      "supuesto": "Benicasim/PRACTICAS/2.Test clase 13-10-2026 (2).pdf",
+      "soluciones": "Benicasim/PRACTICAS/2.Solución Test Clase 13-10-2026.pdf"
     },
     {
       "n": 3,
       "fecha": "20/10/2026",
-      "test": "Benicasim/PRACTICAS/Test - Clase 20-10-2026  (1).pdf"
+      "nombre": "Test clase",
+      "test": "Benicasim/PRACTICAS/3.Test - Clase 20-10-2026  (1).pdf"
     },
     {
       "n": 4,
       "fecha": "27/10/2026",
-      "test": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf"
+      "nombre": "Test clase",
+      "test": "Benicasim/PRACTICAS/4.Test - Clase 27-10-2026.pdf"
+    },
+    {
+      "n": 5,
+      "fecha": "03/11/2026",
+      "nombre": "Test clase",
+      "test": "Benicasim/PRACTICAS/5.Test - Clase 03-11-2026.pdf"
+    },
+    {
+      "n": 6,
+      "fecha": "09/11/2026",
+      "nombre": "Test sesión práctica",
+      "test": "Benicasim/PRACTICAS/6.Test sesion práctica 09-11.pdf"
+    },
+    {
+      "n": 7,
+      "fecha": "10/11/2026",
+      "nombre": "Test de repaso",
+      "test": "Benicasim/PRACTICAS/7. Test Repaso  10-11.pdf"
+    },
+    {
+      "n": 8,
+      "nombre": "Simulacro final de examen",
+      "test": "Benicasim/PRACTICAS/8.Simulacro final examen.pdf"
     }
   ]
 }

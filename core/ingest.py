@@ -149,9 +149,16 @@ def _dates(p: Path) -> set[tuple[int, int]]:
     return {(int(a), int(b)) for a, b in DATE_RE.findall(p.stem)}
 
 
+PREFIX_RE = re.compile(r"^(\d{1,2})\s*\.")  # nº de orden de las prácticas («5.Test …» ↔ «5.Soluciones …»)
+
+
 def pair_solution(test: Path, sols: list[Path]) -> Path | None:
     if not sols:
         return None
+    m = PREFIX_RE.match(test.name)
+    if m:
+        same = [s for s in sols if (PREFIX_RE.match(s.name) or [None, None])[1] == m.group(1)]
+        return same[0] if len(same) == 1 else None
     if _dates(test):  # test de clase con fecha: solo su solucionario de la misma fecha
         sols = [s for s in sols if _dates(s) & _dates(test)]
         if not sols:
@@ -229,7 +236,8 @@ def run(verbose: bool = True) -> dict:
                 lines = lines_of(d)
                 qs = parse_questions(lines)
                 good = [q for q in qs if len(q.options) >= 2]
-                if kind == "test" or len(good) >= 5:
+                # en Prácticas, un «Test» sin preguntas tipo test es el supuesto de desarrollo
+                if len(good) >= 5 or (kind == "test" and not (tid == "CP" and not good)):
                     sol = pair_solution(d, sols)
                     add_doc(d, "test", tid)
                     tests.append({"topic": tid, "doc": d, "sol_doc": sol, "qs": qs,

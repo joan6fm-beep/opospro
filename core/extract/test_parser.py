@@ -90,6 +90,8 @@ SOL_B_ANS_RE = re.compile(r"^Respuesta correcta\s*:\s*([A-Ha-h])\s*\)\s*(.*)$", 
 SOL_B_JUST_RE = re.compile(r"^Justificaci[óo]n(?:\s+jur[íi]dica)?\s*:\s*(.*)$", re.I)
 # «1. Pregunta 1: Opción c» (Soluciones Test Tema 7 y 10)
 SOL_C_RE = re.compile(r"^(\d{1,3})\s*\.\s*Pregunta\s+\d{1,3}\s*:\s*Opci[óo]n\s+([A-Ha-h])\b\s*(.*)$", re.I)
+# «1. Respuesta A. El artículo 55.2…» (Soluciones Test Repaso 10-11)
+SOL_D_RE = re.compile(r"^(\d{1,3})\s*\.\s*Respuesta\s+([A-Ha-h])\b[.:]?\s*(.*)$", re.I)
 
 
 def parse_solutions(lines: list[Line]) -> list[ParsedSolution]:
@@ -112,6 +114,13 @@ def parse_solutions(lines: list[Line]) -> list[ParsedSolution]:
             sols.append(cur)
             expected += 1
             mode = None
+            continue
+        md = SOL_D_RE.match(t)
+        if md and int(md.group(1)) == expected:
+            cur = ParsedSolution(int(md.group(1)), md.group(2).lower(), justification=md.group(3).strip(), page=ln.page)
+            sols.append(cur)
+            expected += 1
+            mode = "just"
             continue
         ma = SOL_A_RE.match(t)
         if ma and int(ma.group(1)) == expected:
@@ -166,7 +175,32 @@ def parse_solutions(lines: list[Line]) -> list[ParsedSolution]:
         rep = _parse_repeated_stem_solutions(lines)
         if rep:
             return rep
+    # solucionario en tabla «Nº | (enunciado) | Letra | Justificación», una celda por línea
+    if not sols:
+        tab = _parse_table_solutions(lines)
+        if tab:
+            return tab
     return sols
+
+
+def _parse_table_solutions(lines: list[Line]) -> list[ParsedSolution]:
+    sols: list[ParsedSolution] = []
+    cur: ParsedSolution | None = None
+    expected = 1
+    for ln in lines:
+        t = ln.text.strip()
+        if re.fullmatch(r"\d{1,3}", t) and int(t) == expected and (cur is None or cur.letter):
+            cur = ParsedSolution(expected, "", page=ln.page)
+            sols.append(cur)
+            expected += 1
+        elif cur and not cur.letter and ln.bold and re.fullmatch(r"[A-Da-d]", t):
+            cur.letter = t.lower()
+        elif cur and cur.letter:
+            cur.justification = _join(cur.justification, t)
+    sols = [s for s in sols if s.letter]
+    for s in sols:
+        s.justification = s.justification.strip()
+    return sols if len(sols) >= 5 and [s.number for s in sols] == list(range(1, len(sols) + 1)) else []
 
 
 def _parse_repeated_stem_solutions(lines: list[Line]) -> list[ParsedSolution]:

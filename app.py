@@ -85,8 +85,8 @@ pages = {
         R("simulacros", simulacros.render, title="Simulacros", icon="⏱️", url_path="simulacros"),
         R("favoritas", favoritas.render, title="Favoritas", icon="⭐", url_path="favoritas"),
     ],
-    "Prácticas": [
-        R("practicas", practicas.render, title="Prácticas", icon="🧩", url_path="practicas"),
+    "Prácticas y exámenes de clase": [
+        R("practicas", practicas.render, title="Prácticas y exámenes de clase", icon="🧩", url_path="practicas"),
     ],
     "Estudiar": [
         R("temario", temario.render, title="Estudiar temario", icon="📚", url_path="temario"),

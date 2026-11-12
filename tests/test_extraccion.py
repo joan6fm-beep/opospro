@@ -8,10 +8,10 @@ from core.extract.test_parser import normalize
 def test_inventario_basico():
     inv = ingest.build_inventory()
     assert inv["temas_detectados"] == 12
-    assert inv["test_originales"] == 15               # Temas 7 y 10 en un único test · Prácticas 1, 3 y 4
-    assert inv["preguntas_totales"] == 670
-    assert inv["preguntas_verificadas"] == 627
-    assert inv["preguntas_pendientes"] == 41          # Práctica 4 sin solucionario (40) + Práctica 3 nº 30
+    assert inv["test_originales"] == 19               # Temas 7 y 10 en un único test · Prácticas 1 y 3-8
+    assert inv["preguntas_totales"] == 916
+    assert inv["preguntas_verificadas"] == 913
+    assert inv["preguntas_pendientes"] == 1           # Práctica 3 nº 30: el solucionario solo trae 29
     assert inv["preguntas_con_contradiccion"] == 1    # Tema 9 nº 14 (ambigua según el propio solucionario)
 
 
@@ -19,7 +19,9 @@ def test_numero_preguntas_y_opciones_por_test():
     for t in db.query("SELECT * FROM tests"):
         n = db.scalar("SELECT COUNT(*) FROM question_sources WHERE test_id=?", (t["id"],))
         assert n == t["n_questions"]
-        expected = {"T:Test Tema 7 y 10": 70}.get(t["id"]) or (
+        practica = {"1": 25, "3": 30, "4": 40, "5": 50, "6": 100, "7": 47, "8": 49}
+        pref = t["doc_id"].split("/")[-1].split(".")[0] if "PRACTICAS" in t["doc_id"] else ""
+        expected = {"T:Test Tema 7 y 10": 70}.get(t["id"]) or practica.get(pref) or (
             30 if ("Parte 2" in t["doc_id"] or "20-10" in t["doc_id"]) else 40 if "27-10" in t["doc_id"]
             else 25 if ("TEMA 9" in t["doc_id"] or "06-10" in t["doc_id"]) else 50)
         assert n == expected, t["doc_id"]
@@ -59,7 +61,7 @@ def test_asociacion_soluciones_formato_largo_tema9():
 
 def test_pendientes_no_puntuables():
     pend = bank.pending_questions()
-    assert len(pend) == 42
+    assert len(pend) == 2              # Práctica 3 nº 30 (sin solución) + Tema 9 nº 14 (ambigua)
     ids = set(bank.question_ids_for_topics(None))
     assert not ids & {q.id for q in pend}
 
@@ -129,13 +131,18 @@ def test_correcciones_por_enunciado():
 
 
 def test_practicas():
-    t1 = bank.test_by_doc("Benicasim/PRACTICAS/Test - Clase 06-10-2026 (1).pdf")
-    t3 = bank.test_by_doc("Benicasim/PRACTICAS/Test - Clase 20-10-2026  (1).pdf")
-    t4 = bank.test_by_doc("Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf")
-    assert len(bank.test_question_ids(t1["id"])) == 25
-    assert len(bank.test_question_ids(t3["id"])) == 29        # el solucionario no trae la nº 30
-    assert bank.test_question_ids(t4["id"]) == []              # sin solucionario: no se inventan respuestas
-    assert t1["topic_id"] == t3["topic_id"] == t4["topic_id"] == "CP"
+    D = "Benicasim/PRACTICAS/"
+    docs = {1: "1. Test Clase 06-10-2026 (1).pdf", 3: "3.Test - Clase 20-10-2026  (1).pdf", 4: "4.Test - Clase 27-10-2026.pdf",
+            5: "5.Test - Clase 03-11-2026.pdf", 6: "6.Test sesion práctica 09-11.pdf", 7: "7. Test Repaso  10-11.pdf",
+            8: "8.Simulacro final examen.pdf"}
+    n_ok = {1: 25, 3: 29, 4: 40, 5: 50, 6: 100, 7: 47, 8: 49}   # Práctica 3: el solucionario no trae la nº 30
+    for n, d in docs.items():
+        t = bank.test_by_doc(D + d)
+        assert t["topic_id"] == "CP" and t["solution_doc_id"].split("/")[-1].startswith(str(n)), d
+        assert len(bank.test_question_ids(t["id"])) == n_ok[n], d
+    # el supuesto de desarrollo (Práctica 2) no se importa como test
+    assert db.scalar("SELECT kind FROM documents WHERE id=?", (D + "2.Test clase 13-10-2026 (2).pdf",)) == "supuesto"
+    assert not bank.test_by_doc(D + "2.Test clase 13-10-2026 (2).pdf")
     # Caso practico/ contiene copias idénticas: no se duplican
     assert not db.query("SELECT 1 FROM documents WHERE id LIKE 'Caso practico/%'")
     q = _q("06-10-2026", 1)

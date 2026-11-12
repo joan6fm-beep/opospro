@@ -1,4 +1,4 @@
-"""Prácticas de clase: test con corrección y supuesto práctico de desarrollo con autocorrección."""
+"""Prácticas y exámenes de clase: test con corrección, soluciones y errores, y supuesto de desarrollo con autocorrección."""
 from __future__ import annotations
 
 import json
@@ -30,8 +30,51 @@ def _exists(rel: str | None) -> bool:
 
 # ------------------------------------------------------------------ práctica tipo test
 
-def _attempts(test_id: str) -> list[dict]:
-    return [h for h in exams.history(kind=KIND) if h["config"].get("test_id") == test_id]
+def _attempts(test_id: str, n: int) -> list[dict]:
+    # por nº de práctica: los intentos anteriores siguen enlazados aunque el PDF se renombre
+    return [h for h in exams.history(kind=KIND) if h["config"].get("practica") == n or h["config"].get("test_id") == test_id]
+
+
+def _opts_md(q, mine: str | None = None) -> str:
+    out = []
+    for k, o in enumerate(q.options):
+        txt = f"{LETTERS[k]}) {esc(o)}"
+        if LETTERS[k] == q.correct_letter:
+            txt = f"✅ **{txt}**"
+        elif LETTERS[k] == mine:
+            txt = f"❌ ~~{txt}~~ (tu respuesta)"
+        out.append(txt)
+    return "  \n".join(out)
+
+
+def _solutions(qs: dict, ids: list[str]) -> None:
+    blocks = []
+    for i in ids:
+        q = qs[i]
+        head = f"**{q.source_number}. {esc(q.stem)}**  \n"
+        if q.scoreable:
+            blocks.append(head + _opts_md(q) + (f"\n\n> {esc(q.justification)}" if q.justification else ""))
+        else:
+            blocks.append(head + "  \n".join(f"{LETTERS[k]}) {esc(o)}" for k, o in enumerate(q.options))
+                          + "\n\n_⚠️ Sin respuesta en el solucionario oficial: no puntúa._")
+    st.markdown("\n\n---\n\n".join(blocks))
+
+
+def _errors(qs: dict, ids: list[str], states: dict) -> None:
+    wrong = [i for i in ids if i in states and states[i]["n_wrong"] > 0]
+    if not wrong:
+        st.caption("Todavía no has fallado ninguna pregunta de esta práctica.")
+        return
+    mine = {r["question_id"]: r["selected"] for r in db.query(
+        "SELECT question_id, selected FROM exam_answers WHERE is_correct=0 AND selected IS NOT NULL "
+        f"AND question_id IN ({','.join('?' * len(wrong))}) ORDER BY answered_at", wrong)}
+    blocks = []
+    for i in wrong:
+        q, s_ = qs[i], states[i]
+        tag = "✅ acertada después" if s_["last_result"] == 1 else "❌ pendiente de corregir"
+        blocks.append(f"**{q.source_number}. {esc(q.stem)}**  \n_{s_['n_wrong']} fallo(s) · {tag}_  \n"
+                      + _opts_md(q, mine.get(i)) + (f"\n\n> {esc(q.justification)}" if q.justification else ""))
+    st.markdown("\n\n---\n\n".join(blocks))
 
 
 def _test_practice(p: dict, title: str) -> None:
@@ -45,7 +88,7 @@ def _test_practice(p: dict, title: str) -> None:
     pending = [i for i in all_ids if i not in set(qids)]
     states = srs.all_states()
     failed = [i for i in qids if i in states and states[i]["n_wrong"] > 0 and states[i]["last_result"] == 0]
-    hist = _attempts(t["id"])
+    hist = _attempts(t["id"], p["n"])
     best = max((h["grade"] for h in hist), default=None)
     kpi_row([("Preguntas", str(len(qids)), f"de {len(all_ids)} en el documento"),
              ("Intentos", str(len(hist)), ""),
@@ -69,14 +112,14 @@ def _test_practice(p: dict, title: str) -> None:
         if c3.button(f"❌ Repetir falladas ({len(failed)})", key=f"{key}_ko", width="stretch", disabled=not failed):
             nav.start_exam("fallos", mode, f"{title} · falladas", failed, ["CP"], time_limit_s=tl)
     if pending and qids:
-        st.caption(f"⚠️ {len(pending)} pregunta(s) sin respuesta en el solucionario: se muestran abajo, pero no puntúan.")
-    if pending:
-        with st.expander(f"📄 Ver preguntas sin solucionario ({len(pending)})"):
-            qs = bank.get_questions(pending)
-            for i in pending:
-                q = qs[i]
-                st.markdown(f"**{q.source_number}. {esc(q.stem)}**  \n" +
-                            "  \n".join(f"{LETTERS[k]}) {esc(o)}" for k, o in enumerate(q.options)))
+        st.caption(f"⚠️ {len(pending)} pregunta(s) sin respuesta en el solucionario oficial: aparecen en las "
+                   "soluciones, pero no puntúan.")
+    qs = bank.get_questions(all_ids)
+    n_err = sum(1 for i in qids if i in states and states[i]["n_wrong"] > 0)
+    with st.expander(f"🔑 Consultar soluciones ({len(qids)}/{len(all_ids)})"):
+        _solutions(qs, all_ids)
+    with st.expander(f"🔍 Revisar mis errores ({n_err})"):
+        _errors(qs, qids, states)
     if hist:
         st.markdown("**Resultados anteriores**")
         st.dataframe(pd.DataFrame([{
@@ -231,18 +274,29 @@ def _case_practice(p: dict, title: str) -> None:
 
 # ------------------------------------------------------------------ página
 
+def _label(p: dict) -> str:
+    return f"Práctica {p['n']} · {p.get('nombre', 'Test clase')}" + (f" · {p['fecha']}" if p.get("fecha") else "")
+
+
 def render() -> None:
-    nav.page_header("Prácticas", "Ejercicios de las clases prácticas con su solucionario oficial.", "🧩")
+    nav.page_header("Prácticas y exámenes de clase",
+                    "Cada práctica por separado, con su solucionario oficial y la revisión de tus errores.", "🧩")
     prs = _catalog()
     if not prs:
         st.info("No hay prácticas configuradas.")
         return
-    tabs = st.tabs([f"Práctica {p['n']}" for p in prs])
-    for tab, p in zip(tabs, prs):
-        with tab:
-            title = f"Práctica {p['n']}" + (f" · clase {p['fecha']}" if p.get("fecha") else "")
+    tests = [p for p in prs if not p.get("supuesto")]
+    cases = [p for p in prs if p.get("supuesto")]
+    tab_t, tab_c = st.tabs([f"📝 Test de clase ({len(tests)})", f"✍️ Supuesto de desarrollo ({len(cases)})"])
+    with tab_t:
+        p = st.selectbox("Práctica", tests, format_func=_label, key="pr_sel")
+        if p:
+            title = _label(p)
             st.markdown(f"#### {esc(title)}")
-            if p.get("supuesto"):
-                _case_practice(p, title)
-            else:
-                _test_practice(p, title)
+            _test_practice(p, title)
+    with tab_c:
+        st.caption("Preguntas de desarrollo: se corrigen aparte y no se mezclan con los test ni con los simulacros.")
+        for p in cases:
+            title = _label(p)
+            st.markdown(f"#### {esc(title)}")
+            _case_practice(p, title)

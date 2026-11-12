@@ -84,16 +84,20 @@ def test_practicas_flujo(clean_user):
     at.session_state["_test_page"] = "practicas"
     at.run()
     assert not at.exception, [e.message for e in at.exception]
-    assert [t.label for t in at.tabs][:4] == ["Práctica 1", "Práctica 2", "Práctica 3", "Práctica 4"]
+    assert [t.label for t in at.tabs][:2] == ["📝 Test de clase (7)", "✍️ Supuesto de desarrollo (1)"]
+    assert len(at.selectbox(key="pr_sel").options) == 7
     assert any("Hacer práctica (25)" in b.label for b in at.button)
+    assert any("Consultar soluciones (25/25)" in e.label for e in at.expander)
+    at.selectbox(key="pr_sel").select_index(1).run()                           # Práctica 3: la nº 30 no puntúa
     assert any("Hacer práctica (29)" in b.label for b in at.button)
-    assert any("no trae solucionario" in w.value for w in at.warning)          # Práctica 4: no se inventan respuestas
+    assert any("Consultar soluciones (29/30)" in e.label for e in at.expander)
+    at.selectbox(key="pr_sel").select_index(0).run()
     # iniciar la Práctica 1 crea un examen con sus 25 preguntas en orden
     at.button(key="pr1_go").click().run()
     eid = at.session_state["exam_id"]
     e = exams.get_exam(eid)
     assert e["kind"] == "practica" and e["n_questions"] == 25
-    t1 = bank.test_by_doc("Benicasim/PRACTICAS/Test - Clase 06-10-2026 (1).pdf")
+    t1 = bank.test_by_doc("Benicasim/PRACTICAS/1. Test Clase 06-10-2026 (1).pdf")
     assert [a["question_id"] for a in exams.get_answers(eid)] == bank.test_question_ids(t1["id"])
     for a in exams.get_answers(eid)[:3]:
         exams.answer(eid, a["position"], a["correct_letter"])
@@ -104,6 +108,7 @@ def test_practicas_flujo(clean_user):
     at2.run()
     assert not at2.exception
     assert any("Resultados anteriores" in m.value for m in at2.markdown)
+    assert any("Revisar mis errores (0)" in e.label for e in at2.expander)
     from core import stats
     row = stats.per_topic().set_index("topic_id").loc["CP"]
     assert row["aciertos"] == 3

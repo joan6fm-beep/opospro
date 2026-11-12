@@ -1,22 +1,22 @@
 {
-  "generado": "2026-11-10T00:48:26",
+  "generado": "2026-11-12T23:19:19",
   "temas_detectados": 12,
-  "documentos": 114,
+  "documentos": 123,
   "documentos_por_tipo": {
     "documento": 1,
     "equivalencias": 1,
     "esquema": 66,
-    "soluciones": 16,
+    "soluciones": 21,
     "supuesto": 1,
     "teoria": 13,
-    "test": 16
+    "test": 20
   },
-  "test_originales": 15,
-  "preguntas_totales": 670,
-  "preguntas_unicas": 669,
-  "grupos_sin_duplicados_aprox": 664,
-  "preguntas_verificadas": 627,
-  "preguntas_pendientes": 41,
+  "test_originales": 19,
+  "preguntas_totales": 916,
+  "preguntas_unicas": 915,
+  "grupos_sin_duplicados_aprox": 910,
+  "preguntas_verificadas": 913,
+  "preguntas_pendientes": 1,
   "preguntas_con_contradiccion": 1,
   "apartados_teoria": 362,
   "esquemas": 66,
@@ -119,9 +119,9 @@
     },
     {
       "tema": "CP",
-      "nombre": "Prácticas",
-      "preguntas": 95,
-      "verificadas": 54,
+      "nombre": "Prácticas y exámenes de clase",
+      "preguntas": 341,
+      "verificadas": 340,
       "apartados_teoria": 0,
       "esquemas": 0
     }
@@ -236,51 +236,81 @@
       "n_verified": 50
     },
     {
-      "id": "T:Benicasim/PRACTICAS/Test - Clase 06-10-2026 (1).pdf",
+      "id": "T:Benicasim/PRACTICAS/1. Test Clase 06-10-2026 (1).pdf",
       "topic_id": "CP",
-      "name": "Test - Clase 06-10-2026 (1)",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 06-10-2026 (1).pdf",
-      "solution_doc_id": "Benicasim/PRACTICAS/Soluciones Test - Clase 06-10-2026.pdf",
+      "name": "1. Test Clase 06-10-2026 (1)",
+      "doc_id": "Benicasim/PRACTICAS/1. Test Clase 06-10-2026 (1).pdf",
+      "solution_doc_id": "Benicasim/PRACTICAS/1. Soluciones Test - Clase 06-10-2026.pdf",
       "n_questions": 25,
       "n_verified": 25
     },
     {
-      "id": "T:Benicasim/PRACTICAS/Test - Clase 20-10-2026  (1).pdf",
+      "id": "T:Benicasim/PRACTICAS/3.Test - Clase 20-10-2026  (1).pdf",
       "topic_id": "CP",
-      "name": "Test - Clase 20-10-2026  (1)",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 20-10-2026  (1).pdf",
-      "solution_doc_id": "Benicasim/PRACTICAS/Soluciones Test - Clase 20-10-2026.pdf",
+      "name": "3.Test - Clase 20-10-2026  (1)",
+      "doc_id": "Benicasim/PRACTICAS/3.Test - Clase 20-10-2026  (1).pdf",
+      "solution_doc_id": "Benicasim/PRACTICAS/3.Soluciones Test - Clase 20-10-2026.pdf",
       "n_questions": 30,
       "n_verified": 29
     },
     {
-      "id": "T:Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
+      "id": "T:Benicasim/PRACTICAS/4.Test - Clase 27-10-2026.pdf",
       "topic_id": "CP",
-      "name": "Test - Clase 27-10-2026",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "solution_doc_id": null,
+      "name": "4.Test - Clase 27-10-2026",
+      "doc_id": "Benicasim/PRACTICAS/4.Test - Clase 27-10-2026.pdf",
+      "solution_doc_id": "Benicasim/PRACTICAS/4.Soluciones Test 27-10.pdf",
       "n_questions": 40,
-      "n_verified": 0
+      "n_verified": 40
+    },
+    {
+      "id": "T:Benicasim/PRACTICAS/5.Test - Clase 03-11-2026.pdf",
+      "topic_id": "CP",
+      "name": "5.Test - Clase 03-11-2026",
+      "doc_id": "Benicasim/PRACTICAS/5.Test - Clase 03-11-2026.pdf",
+      "solution_doc_id": "Benicasim/PRACTICAS/5.Soluciones Test 03-11.pdf",
+      "n_questions": 50,
+      "n_verified": 50
+    },
+    {
+      "id": "T:Benicasim/PRACTICAS/6.Test sesion práctica 09-11.pdf",
+      "topic_id": "CP",
+      "name": "6.Test sesion práctica 09-11",
+      "doc_id": "Benicasim/PRACTICAS/6.Test sesion práctica 09-11.pdf",
+      "solution_doc_id": "Benicasim/PRACTICAS/6.Solucion Test 09-11.pdf",
+      "n_questions": 100,
+      "n_verified": 100
+    },
+    {
+      "id": "T:Benicasim/PRACTICAS/7. Test Repaso  10-11.pdf",
+      "topic_id": "CP",
+      "name": "7. Test Repaso  10-11",
+      "doc_id": "Benicasim/PRACTICAS/7. Test Repaso  10-11.pdf",
+      "solution_doc_id": "Benicasim/PRACTICAS/7.Soluciones Test Repaso 10-11.pdf",
+      "n_questions": 47,
+      "n_verified": 47
+    },
+    {
+      "id": "T:Benicasim/PRACTICAS/8.Simulacro final examen.pdf",
+      "topic_id": "CP",
+      "name": "8.Simulacro final examen",
+      "doc_id": "Benicasim/PRACTICAS/8.Simulacro final examen.pdf",
+      "solution_doc_id": "Benicasim/PRACTICAS/8.Soluciones simulacro final examen.pdf",
+      "n_questions": 49,
+      "n_verified": 49
     }
   ],
   "incidencias": [
     {
-      "kind": "sin_solucionario",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": null,
-      "detail": "El test «Test - Clase 27-10-2026.pdf» no tiene solucionario: sus 40 preguntas quedan pendientes de revisión."
-    },
-    {
       "kind": "documento_duplicado",
       "doc_id": "Caso practico/Practica 1.pdf",
       "question_id": null,
-      "detail": "Copia idéntica de Benicasim/PRACTICAS/Test - Clase 06-10-2026 (1).pdf; se importa solo una vez"
+      "detail": "Copia idéntica de Benicasim/PRACTICAS/1. Test Clase 06-10-2026 (1).pdf; se importa solo una vez"
     },
     {
       "kind": "documento_duplicado",
       "doc_id": "Caso practico/Practica 2.pdf",
       "question_id": null,
-      "detail": "Copia idéntica de Benicasim/PRACTICAS/Caso prático 13-10-2026 (2).pdf; se importa solo una vez"
+      "detail": "Copia idéntica de Benicasim/PRACTICAS/2.Test clase 13-10-2026 (2).pdf; se importa solo una vez"
     },
     {
       "kind": "documento_ilegible",
@@ -302,255 +332,15 @@
     },
     {
       "kind": "recuento_distinto",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 20-10-2026  (1).pdf",
+      "doc_id": "Benicasim/PRACTICAS/3.Test - Clase 20-10-2026  (1).pdf",
       "question_id": null,
       "detail": "El test tiene 30 preguntas y el solucionario 29 respuestas."
     },
     {
       "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 20-10-2026  (1).pdf",
+      "doc_id": "Benicasim/PRACTICAS/3.Test - Clase 20-10-2026  (1).pdf",
       "question_id": "41f06848709aa7",
       "detail": "Pregunta 30: El solucionario no contiene la pregunta 30"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "e4c7abbcdd3d0e",
-      "detail": "Pregunta 1: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "dbb3d1da925c75",
-      "detail": "Pregunta 2: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "56d70860e94246",
-      "detail": "Pregunta 3: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "5606c152a54977",
-      "detail": "Pregunta 4: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "c74a3ae6dbc943",
-      "detail": "Pregunta 5: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "9c728657ed4771",
-      "detail": "Pregunta 6: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "512f88476b5e28",
-      "detail": "Pregunta 7: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "330657a576c722",
-      "detail": "Pregunta 8: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "e507f0bfb3b2b4",
-      "detail": "Pregunta 9: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "27378ecfef14f6",
-      "detail": "Pregunta 10: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "ef59f7965046ab",
-      "detail": "Pregunta 11: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "c4268b5d1fb8c1",
-      "detail": "Pregunta 12: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "32da1ac1326590",
-      "detail": "Pregunta 13: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "156fa81a258e2d",
-      "detail": "Pregunta 14: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "b04d4ab3cbaa83",
-      "detail": "Pregunta 15: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "f0888627a25fb9",
-      "detail": "Pregunta 16: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "44c55994182b6b",
-      "detail": "Pregunta 17: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "72510f8387c43d",
-      "detail": "Pregunta 18: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "cad8126a83121c",
-      "detail": "Pregunta 19: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "6cecfc11b7d9fe",
-      "detail": "Pregunta 20: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "c931e0b8cf0762",
-      "detail": "Pregunta 21: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "b6e3e806d7b295",
-      "detail": "Pregunta 22: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "c8db7d677e1bb5",
-      "detail": "Pregunta 23: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "ec270e263ae2a8",
-      "detail": "Pregunta 24: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "5484c21b0d63b4",
-      "detail": "Pregunta 25: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "cd2b85aefa0ea2",
-      "detail": "Pregunta 26: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "346051a1ae657c",
-      "detail": "Pregunta 27: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "6cc8ca18ef0fba",
-      "detail": "Pregunta 28: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "0ecbe1eab52f82",
-      "detail": "Pregunta 29: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "c3c185cd3437bb",
-      "detail": "Pregunta 30: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "148092b5a0c0f2",
-      "detail": "Pregunta 31: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "96f4f4e2f54103",
-      "detail": "Pregunta 32: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "2d3fb322e7e1b4",
-      "detail": "Pregunta 33: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "43e1a98ee9f126",
-      "detail": "Pregunta 34: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "0f31a8c5c0167a",
-      "detail": "Pregunta 35: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "78956abc9b76d5",
-      "detail": "Pregunta 36: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "4af5bbb7ade9b6",
-      "detail": "Pregunta 37: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "0cb7ea6fbb8e6e",
-      "detail": "Pregunta 38: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "181e7cb52ae2a6",
-      "detail": "Pregunta 39: Sin solucionario oficial en los documentos"
-    },
-    {
-      "kind": "pendiente",
-      "doc_id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
-      "question_id": "92304efade63e4",
-      "detail": "Pregunta 40: Sin solucionario oficial en los documentos"
     },
     {
       "kind": "posible_duplicado",
@@ -591,46 +381,100 @@
       "pages": 4
     },
     {
-      "id": "Benicasim/PRACTICAS/Caso prático 13-10-2026 (2).pdf",
-      "kind": "supuesto",
-      "topic_id": "CP",
-      "pages": 3
-    },
-    {
-      "id": "Benicasim/PRACTICAS/Soluciones - Clase 13-10-2026.pdf",
-      "kind": "soluciones",
-      "topic_id": "CP",
-      "pages": 10
-    },
-    {
-      "id": "Benicasim/PRACTICAS/Soluciones Test - Clase 06-10-2026.pdf",
+      "id": "Benicasim/PRACTICAS/1. Soluciones Test - Clase 06-10-2026.pdf",
       "kind": "soluciones",
       "topic_id": "CP",
       "pages": 5
     },
     {
-      "id": "Benicasim/PRACTICAS/Soluciones Test - Clase 20-10-2026.pdf",
-      "kind": "soluciones",
-      "topic_id": "CP",
-      "pages": 10
-    },
-    {
-      "id": "Benicasim/PRACTICAS/Test - Clase 06-10-2026 (1).pdf",
+      "id": "Benicasim/PRACTICAS/1. Test Clase 06-10-2026 (1).pdf",
       "kind": "test",
       "topic_id": "CP",
       "pages": 6
     },
     {
-      "id": "Benicasim/PRACTICAS/Test - Clase 20-10-2026  (1).pdf",
+      "id": "Benicasim/PRACTICAS/2.Solución Test Clase 13-10-2026.pdf",
+      "kind": "soluciones",
+      "topic_id": "CP",
+      "pages": 10
+    },
+    {
+      "id": "Benicasim/PRACTICAS/2.Test clase 13-10-2026 (2).pdf",
+      "kind": "supuesto",
+      "topic_id": "CP",
+      "pages": 3
+    },
+    {
+      "id": "Benicasim/PRACTICAS/3.Soluciones Test - Clase 20-10-2026.pdf",
+      "kind": "soluciones",
+      "topic_id": "CP",
+      "pages": 10
+    },
+    {
+      "id": "Benicasim/PRACTICAS/3.Test - Clase 20-10-2026  (1).pdf",
       "kind": "test",
       "topic_id": "CP",
       "pages": 7
     },
     {
-      "id": "Benicasim/PRACTICAS/Test - Clase 27-10-2026.pdf",
+      "id": "Benicasim/PRACTICAS/4.Soluciones Test 27-10.pdf",
+      "kind": "soluciones",
+      "topic_id": "CP",
+      "pages": 5
+    },
+    {
+      "id": "Benicasim/PRACTICAS/4.Test - Clase 27-10-2026.pdf",
       "kind": "test",
       "topic_id": "CP",
       "pages": 13
+    },
+    {
+      "id": "Benicasim/PRACTICAS/5.Soluciones Test 03-11.pdf",
+      "kind": "soluciones",
+      "topic_id": "CP",
+      "pages": 6
+    },
+    {
+      "id": "Benicasim/PRACTICAS/5.Test - Clase 03-11-2026.pdf",
+      "kind": "test",
+      "topic_id": "CP",
+      "pages": 11
+    },
+    {
+      "id": "Benicasim/PRACTICAS/6.Solucion Test 09-11.pdf",
+      "kind": "soluciones",
+      "topic_id": "CP",
+      "pages": 10
+    },
+    {
+      "id": "Benicasim/PRACTICAS/6.Test sesion práctica 09-11.pdf",
+      "kind": "test",
+      "topic_id": "CP",
+      "pages": 24
+    },
+    {
+      "id": "Benicasim/PRACTICAS/7. Test Repaso  10-11.pdf",
+      "kind": "test",
+      "topic_id": "CP",
+      "pages": 12
+    },
+    {
+      "id": "Benicasim/PRACTICAS/7.Soluciones Test Repaso 10-11.pdf",
+      "kind": "soluciones",
+      "topic_id": "CP",
+      "pages": 5
+    },
+    {
+      "id": "Benicasim/PRACTICAS/8.Simulacro final examen.pdf",
+      "kind": "test",
+      "topic_id": "CP",
+      "pages": 10
+    },
+    {
+      "id": "Benicasim/PRACTICAS/8.Soluciones simulacro final examen.pdf",
+      "kind": "soluciones",
+      "topic_id": "CP",
+      "pages": 6
     },
     {
       "id": "Benicasim/TEMA 1/Soluciones Test - Tema 1.pdf",
