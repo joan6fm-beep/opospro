@@ -298,4 +298,5 @@ KIND_LABELS = {
     "repaso": "Repaso inteligente",
     "nuevas": "Preguntas nuevas",
     "practica": "Práctica de clase",
+    "convocatoria": "Examen de convocatoria",
 }

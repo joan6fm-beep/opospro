@@ -10,7 +10,7 @@ from ui.components import esc, kpi_row
 
 def topic_selector(key: str, default: str | None = None, include_empty: bool = False,
                    exclude: tuple[str, ...] = ()) -> str | None:
-    tps = [t for t in bank.topics(include_empty=include_empty) if t["id"] not in exclude]
+    tps = [t for t in bank.topics(include_empty=include_empty) if t["id"] not in exclude and not bank.is_exam_topic(t["id"])]
     if not tps:
         st.warning("No hay temas importados.")
         return None

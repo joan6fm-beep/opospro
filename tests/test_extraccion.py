@@ -7,10 +7,10 @@ from core.extract.test_parser import normalize
 
 def test_inventario_basico():
     inv = ingest.build_inventory()
-    assert inv["temas_detectados"] == 12
-    assert inv["test_originales"] == 19               # Temas 7 y 10 en un único test · Prácticas 1 y 3-8
-    assert inv["preguntas_totales"] == 916
-    assert inv["preguntas_verificadas"] == 913
+    assert inv["temas_detectados"] == 16                # Anexo I temas 1-10 · Anexo II temas 1-6
+    assert inv["test_originales"] == 20               # Temas 7 y 10 en un único test · Prácticas 1 y 3-8 · Examen 1.ª convocatoria
+    assert inv["preguntas_totales"] == 946
+    assert inv["preguntas_verificadas"] == 943
     assert inv["preguntas_pendientes"] == 1           # Práctica 3 nº 30: el solucionario solo trae 29
     assert inv["preguntas_con_contradiccion"] == 1    # Tema 9 nº 14 (ambigua según el propio solucionario)
 
@@ -21,7 +21,7 @@ def test_numero_preguntas_y_opciones_por_test():
         assert n == t["n_questions"]
         practica = {"1": 25, "3": 30, "4": 40, "5": 50, "6": 100, "7": 47, "8": 49}
         pref = t["doc_id"].split("/")[-1].split(".")[0] if "PRACTICAS" in t["doc_id"] else ""
-        expected = {"T:Test Tema 7 y 10": 70}.get(t["id"]) or practica.get(pref) or (
+        expected = {"T:Test Tema 7 y 10": 70, "T:EX1": 30}.get(t["id"]) or practica.get(pref) or (
             30 if ("Parte 2" in t["doc_id"] or "20-10" in t["doc_id"]) else 40 if "27-10" in t["doc_id"]
             else 25 if ("TEMA 9" in t["doc_id"] or "06-10" in t["doc_id"]) else 50)
         assert n == expected, t["doc_id"]
@@ -78,7 +78,7 @@ def test_duplicados_e_idempotencia():
 
 def test_clasificacion_por_temas():
     t = {r["id"]: r for r in db.query("SELECT * FROM topics")}
-    assert set(t) == {f"A1-T{i:02d}" for i in range(1, 11)} | {"A2-T01", "A2-T02", "CP"}
+    assert set(t) == {f"A1-T{i:02d}" for i in range(1, 11)} | {f"A2-T{i:02d}" for i in range(1, 7)} | {"CP", "EX1"}
     assert t["A2-T01"]["folder"].endswith("TEMA 11") and t["A2-T02"]["folder"].endswith("TEMA 12")
     assert len(bank.question_ids_for_topics(["A1-T01"])) == 79
     assert len(bank.question_ids_for_topics(["A1-T09"])) == 24
@@ -91,7 +91,7 @@ def test_clasificacion_por_temas():
 def test_vinculo_con_teoria():
     # cada pregunta verificada tiene al menos un fragmento del temario de SU tema
     missing = 0
-    for q in db.query("SELECT id, topic_id FROM questions WHERE status='verificada' AND topic_id != 'CP'"):  # prácticas: todo el temario
+    for q in db.query("SELECT id, topic_id FROM questions WHERE status='verificada' AND topic_id NOT IN ('CP', 'EX1')"):  # prácticas y examen: todo el temario
         links = bank.theory_for_question(q["id"])
         if not links:
             missing += 1

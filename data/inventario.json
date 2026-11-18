@@ -1,24 +1,24 @@
 {
-  "generado": "2026-11-12T23:19:19",
-  "temas_detectados": 12,
-  "documentos": 123,
+  "generado": "2026-11-19T00:53:18",
+  "temas_detectados": 17,
+  "documentos": 127,
   "documentos_por_tipo": {
     "documento": 1,
     "equivalencias": 1,
     "esquema": 66,
     "soluciones": 21,
     "supuesto": 1,
-    "teoria": 13,
+    "teoria": 17,
     "test": 20
   },
-  "test_originales": 19,
-  "preguntas_totales": 916,
-  "preguntas_unicas": 915,
-  "grupos_sin_duplicados_aprox": 910,
-  "preguntas_verificadas": 913,
+  "test_originales": 20,
+  "preguntas_totales": 946,
+  "preguntas_unicas": 945,
+  "grupos_sin_duplicados_aprox": 940,
+  "preguntas_verificadas": 943,
   "preguntas_pendientes": 1,
   "preguntas_con_contradiccion": 1,
-  "apartados_teoria": 362,
+  "apartados_teoria": 408,
   "esquemas": 66,
   "por_tema": [
     {
@@ -116,6 +116,46 @@
       "verificadas": 50,
       "apartados_teoria": 10,
       "esquemas": 3
+    },
+    {
+      "tema": "A2-T03",
+      "nombre": "Terminación del procedimiento y silencio",
+      "preguntas": 0,
+      "verificadas": 0,
+      "apartados_teoria": 8,
+      "esquemas": 0
+    },
+    {
+      "tema": "A2-T04",
+      "nombre": "Recursos administrativos",
+      "preguntas": 0,
+      "verificadas": 0,
+      "apartados_teoria": 5,
+      "esquemas": 0
+    },
+    {
+      "tema": "A2-T05",
+      "nombre": "Responsabilidad patrimonial de la Administración",
+      "preguntas": 0,
+      "verificadas": 0,
+      "apartados_teoria": 6,
+      "esquemas": 0
+    },
+    {
+      "tema": "A2-T06",
+      "nombre": "La potestad sancionadora",
+      "preguntas": 0,
+      "verificadas": 0,
+      "apartados_teoria": 27,
+      "esquemas": 0
+    },
+    {
+      "tema": "EX1",
+      "nombre": "Examen primera convocatoria",
+      "preguntas": 30,
+      "verificadas": 30,
+      "apartados_teoria": 0,
+      "esquemas": 0
     },
     {
       "tema": "CP",
@@ -297,6 +337,15 @@
       "solution_doc_id": "Benicasim/PRACTICAS/8.Soluciones simulacro final examen.pdf",
       "n_questions": 49,
       "n_verified": 49
+    },
+    {
+      "id": "T:EX1",
+      "topic_id": "EX1",
+      "name": "Examen primera convocatoria",
+      "doc_id": "EXAMEN/Examen primera convocatoria",
+      "solution_doc_id": "EXAMEN/Solucionario.png",
+      "n_questions": 30,
+      "n_verified": 30
     }
   ],
   "incidencias": [
@@ -565,6 +614,30 @@
       "kind": "test",
       "topic_id": "A2-T02",
       "pages": 9
+    },
+    {
+      "id": "Benicasim/TEMA 13/Tema 3 - Anexo 2.pdf",
+      "kind": "teoria",
+      "topic_id": "A2-T03",
+      "pages": 12
+    },
+    {
+      "id": "Benicasim/TEMA 14/Tema 4 - Anexo II.pdf",
+      "kind": "teoria",
+      "topic_id": "A2-T04",
+      "pages": 13
+    },
+    {
+      "id": "Benicasim/TEMA 15/Tema 5 - Anexo II.pdf",
+      "kind": "teoria",
+      "topic_id": "A2-T05",
+      "pages": 17
+    },
+    {
+      "id": "Benicasim/TEMA 16/Tema 6 - Anexo II.pdf",
+      "kind": "teoria",
+      "topic_id": "A2-T06",
+      "pages": 13
     },
     {
       "id": "Benicasim/TEMA 2/Soluciones Test - Tema 2.pdf",

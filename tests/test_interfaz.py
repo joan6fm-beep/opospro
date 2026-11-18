@@ -8,7 +8,7 @@ from core import exams
 
 APP = str(Path(__file__).resolve().parent.parent / "app.py")
 PAGES = ["inicio", "examen", "test", "aleatorio", "fallos", "simulacros", "favoritas", "temario", "resumenes",
-         "plan", "estadisticas", "progreso", "historial", "ajustes", "practicas"]
+         "plan", "estadisticas", "progreso", "historial", "ajustes", "practicas", "convocatoria"]
 
 
 @pytest.mark.parametrize("page", PAGES)

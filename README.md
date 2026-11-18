@@ -44,7 +44,9 @@ Los exámenes se guardan en la base de datos a cada respuesta: si cierras la app
 
 ## Material detectado (resumen de `data/INVENTARIO.md`)
 
-* 12 temas (Anexo I temas 1‑10, Anexo II temas 1‑2) + casos prácticos · 102 documentos · 11 test originales.
+* 16 temas (Anexo I temas 1‑10 · Anexo II temas 1‑6 = carpetas TEMA 11‑16) + prácticas + **Examen primera convocatoria** (30 preguntas transcritas en `core/examenes/`, respuestas solo del solucionario oficial).
+* Resúmenes de estudio redactados para Anexo II temas 1‑6 en `core/resumenes_estudio/` (pestaña «📘 Resumen de estudio»).
+* Simulacros por anexo: Anexo I, Anexo II o todos, y después los temas concretos.
 * 500 preguntas, todas únicas; **474 con solución verificada** (son las que entran en los test).
 * 25 preguntas de *Caso practico/Practica 1.pdf* **pendientes**: no hay solucionario en los documentos.
 * 1 pregunta excluida: *Test Tema 9*, nº 14 — el propio solucionario dice «B (o también válida legalmente la D)».

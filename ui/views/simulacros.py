@@ -29,16 +29,23 @@ def render() -> None:
     st.warning("**Simulación.** Tus documentos no incluyen las bases de la convocatoria, así que los criterios de corrección "
                "son parámetros que eliges tú. Ajústalos a las bases oficiales cuando las tengas.")
     saved = db.get_setting("simulacro", {}) or {}
-    tps = bank.topics(include_empty=False)
-    ids = [t["id"] for t in tps]
     tests = bank.tests_by_topic()
+    anexos = list(bank.ANEXOS)
+    # fuera del formulario: al cambiar de anexo se actualiza al momento la lista de temas
+    anexo = st.segmented_control("Anexo", anexos, format_func=bank.ANEXOS.get, key="sim_anexo",
+                                 default=saved.get("anexo") if saved.get("anexo") in anexos else "todos") or "todos"
+    tps = bank.topics_by_anexo(anexo)
+    ids = [t["id"] for t in tps]
     labels = {t["id"]: _topic_option(t, tests) for t in tps}
+    prev = [t for t in saved.get("topics", []) if t in ids] if saved.get("anexo") == anexo else []
+    topics = st.multiselect(f"Temas incluidos ({bank.ANEXOS[anexo]})", ids, default=prev or ids,
+                            format_func=labels.get, key=f"sim_topics_{anexo}")
+    avail = len(exams.select_questions(topics, None, exams.SEL_ALL)) if topics else 0
+    st.caption(f"{len(topics)} de {len(ids)} temas · **{avail}** preguntas distintas disponibles (sin duplicadas)")
     with st.form("sim_form"):
         c1, c2 = st.columns(2)
         n = c1.number_input("Número de preguntas", 5, 500, int(saved.get("n", 50)), step=5)
         mins = c2.number_input("Tiempo máximo (minutos)", 1, 600, int(saved.get("mins", 60)), step=5)
-        topics = st.multiselect("Temas incluidos", ids, default=[t for t in saved.get("topics", ids) if t in ids] or ids,
-                                format_func=labels.get)
         c3, c4, c5 = st.columns(3)
         pc = c3.number_input("Puntos por acierto", 0.0, 10.0, float(saved.get("correct", 1.0)), step=0.1, format="%.3f")
         names = list(PRESETS)
@@ -51,17 +58,18 @@ def render() -> None:
                            format_func=lambda k: exams.SELECTION_LABELS[k])
         go_ = st.form_submit_button("🚀 Empezar simulacro", type="primary")
     if go_:
+        topics = [t for t in topics if t in ids]  # nunca temas de otro anexo
         if not topics:
             st.error("Selecciona algún tema.")
             return
         wrong = PRESETS[preset] if PRESETS[preset] is not None else custom
-        db.set_setting("simulacro", {"n": n, "mins": mins, "topics": topics, "correct": pc, "preset": preset,
-                                     "wrong": custom, "blank": blank})
+        db.set_setting("simulacro", {"n": n, "mins": mins, "topics": topics, "anexo": anexo, "correct": pc,
+                                     "preset": preset, "wrong": custom, "blank": blank})
         qids = exams.select_questions(topics, int(n), sel)
-        title = f"Simulacro · {len(qids)} preguntas · {mins} min"
+        title = f"Simulacro {bank.ANEXOS[anexo]} · {len(qids)} preguntas · {mins} min"
         nav.start_exam("simulacro", "examen", title, qids, topics,
                        scoring=exams.Scoring(correct=pc, wrong=wrong, blank=blank, scale=10.0), time_limit_s=int(mins * 60),
-                       extra={"simulacion": True})
+                       extra={"simulacion": True, "anexo": anexo})
 
     hist = exams.history(kind="simulacro")
     if hist:

@@ -95,9 +95,28 @@ def topic_label(tid: str | None, short: bool = False) -> str:
     if not t:
         return tid
     if t["anexo"] in ("I", "II"):
-        prefix = f"Tema {t['number']}" + (" · Anexo II" if t["anexo"] == "II" else "")
+        prefix = f"Anexo {t['anexo']} · Tema {t['number']}"
         return prefix if short else f"{prefix} — {t['short_name']}"
     return t["short_name"]
+
+
+ANEXOS = {"I": "Anexo I", "II": "Anexo II", "todos": "Todos los anexos"}
+
+
+def is_exam_topic(tid: str | None) -> bool:
+    """Tema propio de un examen de convocatoria (EX1…): no se mezcla con los temas del temario."""
+    return bool(tid) and tid.startswith("EX")
+
+
+def topics_by_anexo(anexo: str, include_empty: bool = False) -> list[dict]:
+    """Temas del Anexo I, del Anexo II o de ambos («todos»). Excluye prácticas y exámenes de convocatoria."""
+    wanted = ("I", "II") if anexo == "todos" else (anexo,)
+    return [t for t in topics(include_empty) if t["anexo"] in wanted]
+
+
+def exam_tests() -> list[dict]:
+    """Exámenes de convocatoria importados (core/examenes/*.json)."""
+    return [dict(r) for r in db.query("SELECT * FROM tests WHERE topic_id LIKE 'EX%' ORDER BY ord")]
 
 
 def topic_labels() -> dict[str, str]:

@@ -1,18 +1,18 @@
 # Inventario del material de estudio
 
-Generado: 2026-11-12T23:19:19
+Generado: 2026-11-19T00:53:18
 
 | Concepto | Valor |
 |---|---|
-| Temas detectados | 12 |
-| Documentos | 123 (documento: 1, equivalencias: 1, esquema: 66, soluciones: 21, supuesto: 1, teoria: 13, test: 20) |
-| Test originales | 19 |
-| Preguntas totales (apariciones) | 916 |
-| Preguntas únicas | 915 |
-| Preguntas con respuesta verificada | 913 |
+| Temas detectados | 17 |
+| Documentos | 127 (documento: 1, equivalencias: 1, esquema: 66, soluciones: 21, supuesto: 1, teoria: 17, test: 20) |
+| Test originales | 20 |
+| Preguntas totales (apariciones) | 946 |
+| Preguntas únicas | 945 |
+| Preguntas con respuesta verificada | 943 |
 | Preguntas pendientes de revisión | 1 |
 | Preguntas con contradicción | 1 |
-| Apartados de teoría | 362 |
+| Apartados de teoría | 408 |
 | Esquemas (imágenes) | 66 |
 
 ## Preguntas por tema
@@ -31,6 +31,11 @@ Generado: 2026-11-12T23:19:19
 | A1-T10 | Prevención de Riesgos Laborales (Ley 31/1995) | 0 | 0 | 21 | 4 |
 | A2-T01 | El acto administrativo | 50 | 50 | 17 | 4 |
 | A2-T02 | Invalidez y revisión de los actos | 50 | 50 | 10 | 3 |
+| A2-T03 | Terminación del procedimiento y silencio | 0 | 0 | 8 | 0 |
+| A2-T04 | Recursos administrativos | 0 | 0 | 5 | 0 |
+| A2-T05 | Responsabilidad patrimonial de la Administración | 0 | 0 | 6 | 0 |
+| A2-T06 | La potestad sancionadora | 0 | 0 | 27 | 0 |
+| EX1 | Examen primera convocatoria | 30 | 30 | 0 | 0 |
 | CP | Prácticas y exámenes de clase | 341 | 340 | 0 | 0 |
 
 ## Test originales
@@ -56,6 +61,7 @@ Generado: 2026-11-12T23:19:19
 | Benicasim/PRACTICAS/6.Test sesion práctica 09-11.pdf | CP | 100 | 100 | Benicasim/PRACTICAS/6.Solucion Test 09-11.pdf |
 | Benicasim/PRACTICAS/7. Test Repaso  10-11.pdf | CP | 47 | 47 | Benicasim/PRACTICAS/7.Soluciones Test Repaso 10-11.pdf |
 | Benicasim/PRACTICAS/8.Simulacro final examen.pdf | CP | 49 | 49 | Benicasim/PRACTICAS/8.Soluciones simulacro final examen.pdf |
+| EXAMEN/Examen primera convocatoria | EX1 | 30 | 30 | EXAMEN/Solucionario.png |
 
 ## Incidencias
 

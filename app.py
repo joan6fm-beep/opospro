@@ -14,7 +14,7 @@ from core import cloudsync, db, diag, userdata  # noqa: E402
 diag.start()
 from ui import nav, theme  # noqa: E402
 from ui.views import (ajustes, estadisticas, examen, fallos, favoritas, historial, inicio, plan_view,  # noqa: E402
-                      practicas, resumenes, simulacros, temario, test_aleatorio, test_tema)
+                      convocatoria, practicas, resumenes, simulacros, temario, test_aleatorio, test_tema)
 
 theme.inject()
 theme.plotly_template()
@@ -83,6 +83,7 @@ pages = {
         R("aleatorio", test_aleatorio.render, title="Test aleatorio", icon="🎲", url_path="aleatorio"),
         R("fallos", fallos.render, title="Mis fallos", icon="❌", url_path="fallos"),
         R("simulacros", simulacros.render, title="Simulacros", icon="⏱️", url_path="simulacros"),
+        R("convocatoria", convocatoria.render, title="Exámenes de convocatoria", icon="🏛️", url_path="convocatoria"),
         R("favoritas", favoritas.render, title="Favoritas", icon="⭐", url_path="favoritas"),
     ],
     "Prácticas y exámenes de clase": [

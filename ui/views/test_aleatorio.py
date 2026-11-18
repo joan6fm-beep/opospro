@@ -9,7 +9,7 @@ from ui import nav
 
 def render() -> None:
     nav.page_header("Test aleatorio personalizado", "Combina temas, cantidad y tipo de preguntas. Solo preguntas reales con solución verificada.", "🎲")
-    tps = bank.topics(include_empty=False)
+    tps = [t for t in bank.topics(include_empty=False) if not bank.is_exam_topic(t["id"])]
     ids = [t["id"] for t in tps]
     all_on = st.toggle("Incluir todos los temas", value=True, key="al_all")
     sel_topics = ids if all_on else st.multiselect("Temas incluidos", ids, default=ids[:1],

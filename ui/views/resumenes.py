@@ -7,7 +7,7 @@ from core import bank, explain, summaries
 from ui import nav
 from ui.components import badge, empty_state, esc
 
-TIPOS = {"completo": "Resumen completo", "apartados": "Por apartados", "rapido": "Resumen rápido",
+TIPOS = {"estudio": "📘 Resumen de estudio", "completo": "Resumen completo", "apartados": "Por apartados", "rapido": "Resumen rápido",
          "esquema": "Esquema de estudio", "errores": "Resumen de mis errores"}
 
 NOTE = (f'{badge("extracto", "Extractos literales")} Las frases son citas exactas del temario seleccionadas '
@@ -36,8 +36,19 @@ def _ai_button(title: str, passages: list[dict], kind: str, key: str) -> None:
 
 
 def summary_panel(tid: str | None, key: str, default: str | None = None) -> None:
-    tipo = st.segmented_control("Tipo de resumen", list(TIPOS), format_func=TIPOS.get, default=default or "rapido",
-                                key=f"rt_{key}") or "rapido"
+    first = "estudio" if summaries.study_summary(tid) else "rapido"
+    tipo = st.segmented_control("Tipo de resumen", list(TIPOS), format_func=TIPOS.get, default=default or first,
+                                key=f"rt_{key}") or first
+    if tipo == "estudio":
+        md = summaries.study_summary(tid)
+        if md:
+            st.markdown(f'{badge("temario", "Resumen de estudio")} Redactado exclusivamente con el contenido del PDF del tema: '
+                        "apartados, artículos, plazos y esquemas. Compruébalo con el temario ante cualquier duda.",
+                        unsafe_allow_html=True)
+            st.markdown(md)
+        else:
+            st.info("Este tema todavía no tiene resumen de estudio redactado. Usa «Resumen rápido» o «Por apartados».")
+        return
     if tipo == "errores":
         _errors(tid, key)
         return

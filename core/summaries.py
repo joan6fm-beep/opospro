@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
+from pathlib import Path
 
 from . import bank, db, srs
 from .search import tokenize
@@ -161,6 +162,15 @@ def error_patterns(topic_ids: list[str] | None = None, min_fails: int = 2) -> li
     for g in out:
         g["pattern"] = len(g["questions"]) >= min_fails
     return out
+
+
+STUDY_DIR = Path(__file__).parent / "resumenes_estudio"
+
+
+def study_summary(tid: str | None) -> str | None:
+    """Resumen de estudio redactado a partir del PDF del tema (core/resumenes_estudio/<tema>.md), si existe."""
+    p = STUDY_DIR / f"{tid}.md"
+    return p.read_text(encoding="utf-8") if tid and p.exists() else None
 
 
 def section_text(section_id: int) -> dict | None:

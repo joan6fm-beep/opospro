@@ -171,6 +171,14 @@ def pair_solution(test: Path, sols: list[Path]) -> Path | None:
     return max(sols, key=lambda s: difflib.SequenceMatcher(None, key, normalize(s.stem.replace("Soluciones", ""))).ratio())
 
 
+EXAMS_DIR = Path(__file__).parent / "examenes"
+
+
+def load_exams() -> list[dict]:
+    """Exámenes de convocatoria transcritos a mano desde las fotografías (respuestas solo del solucionario)."""
+    return [json.loads(p.read_text(encoding="utf-8")) for p in sorted(EXAMS_DIR.glob("*.json"))]
+
+
 # --------------------------------------------------------------------------- importación principal
 
 def run(verbose: bool = True) -> dict:
@@ -461,6 +469,32 @@ def run(verbose: bool = True) -> dict:
                           min(r[7] for r in test_rows_all if r[0] in old_ids)))
     test_rows.sort(key=lambda r: r[7])
 
+    # exámenes de convocatoria transcritos (core/examenes/*.json): tema propio, sin mezclarse con otros test.
+    # Se añaden tras detectar duplicados para que ninguna otra pregunta altere su solución oficial.
+    for ex in load_exams():
+        n_ver = 0
+        test_id = f"T:{ex['id']}"
+        for q in ex["preguntas"]:
+            qid = f"{ex['id']}-{question_uid(q['enunciado'], q['opciones'])}"
+            ok = q.get("solucion") in LETTERS[:len(q["opciones"])] and not q.get("revisar")
+            n_ver += ok
+            qd = dict(id=qid, topic_id=ex["id"], stem=q["enunciado"], options=q["opciones"],
+                      correct_letter=q.get("solucion") if ok else None,
+                      status="verificada" if ok else "pendiente",
+                      status_reason=("Pregunta de reserva" if q.get("reserva") else "") if ok else q.get("revisar") or "Sin solución legible",
+                      official_justification=f"Solucionario oficial: {q['solucion'].upper()}" if ok else "",
+                      solution_doc_id=ex["solucionario"], solution_page=1,
+                      source_doc_id=f"{ex['fuente']}/{ex['nombre']}", source_page=q.get("pagina"),
+                      source_number=q["n"], dup_group=qid)
+            questions[qid] = qd
+            qlist.append(qd)
+            sources.append((qid, test_id, q["n"], qd["source_doc_id"], q.get("pagina"), q["n"]))
+            if not ok:
+                rep.issue("pendiente", qd["source_doc_id"], f"Pregunta {q['n']}: revisar transcripción/solución", qid)
+        topics[ex["id"]] = TopicInfo(ex["id"], "-", 98, title=ex["nombre"], folder=ex["fuente"])
+        test_rows.append((test_id, ex["id"], ex["nombre"], f"{ex['fuente']}/{ex['nombre']}", ex["solucionario"],
+                          len(ex["preguntas"]), n_ver, 900 + len(test_rows)))
+
     # --- 4. teoría: apartados y párrafos
     section_rows, chunk_rows = [], []
     sid = cid = 0
@@ -502,6 +536,8 @@ def run(verbose: bool = True) -> dict:
     for t in topics.values():
         if t.id == "CP":
             t.title = "Prácticas de clase: test y supuesto de desarrollo"
+        elif t.id.startswith("EX"):
+            pass
         else:
             t.title = " · ".join(dict.fromkeys(ttl for _, ttl in sorted(t.titles))) or t.id
         short = CATALOG.get("short_names", {}).get(t.id) or t.title[:60]
@@ -562,7 +598,7 @@ def build_inventory(rep: Report | None = None, started: datetime | None = None) 
     total_occ = db.scalar("SELECT COUNT(*) FROM question_sources", default=0)
     inv = {
         "generado": datetime.now().isoformat(timespec="seconds"),
-        "temas_detectados": db.scalar("SELECT COUNT(*) FROM topics WHERE id!='CP'"),
+        "temas_detectados": db.scalar("SELECT COUNT(*) FROM topics WHERE id!='CP' AND id NOT LIKE 'EX%'"),
         "documentos": db.scalar("SELECT COUNT(*) FROM documents"),
         "documentos_por_tipo": {r["kind"]: r["n"] for r in q("SELECT kind, COUNT(*) n FROM documents GROUP BY kind")},
         "test_originales": db.scalar("SELECT COUNT(*) FROM tests"),
