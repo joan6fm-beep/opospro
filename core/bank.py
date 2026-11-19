@@ -215,3 +215,34 @@ def doc_label(doc_id: str | None) -> str:
     if not doc_id:
         return "—"
     return doc_id.split("/")[-1].rsplit(".", 1)[0]
+
+
+@functools.lru_cache(maxsize=1)
+def _catalog_practicas() -> tuple:
+    from pathlib import Path
+    data = json.loads((Path(__file__).parent / "catalog.json").read_text(encoding="utf-8"))
+    return tuple(data.get("practicas", []))
+
+
+SIMULACRO_FINAL = 8  # nº de práctica del «Simulacro final de examen»
+
+
+def anexo1_sources() -> list[dict]:
+    """Prácticas de clase, examen de primera convocatoria y simulacro final (todos del Anexo I), por separado.
+
+    Solo test tipo test con solución oficial; el supuesto de desarrollo no es un test y no aparece."""
+    out = []
+    for p in _catalog_practicas():
+        t = test_by_doc(p["test"]) if p.get("test") else None
+        if not t:
+            continue
+        n = len(test_question_ids(t["id"]))
+        if p["n"] == SIMULACRO_FINAL:
+            out.append({"id": t["id"], "kind": "final", "label": f"Simulacro final de examen ({n} preg.)", "n": n})
+        else:
+            fecha = f" · {p['fecha']}" if p.get("fecha") else ""
+            out.append({"id": t["id"], "kind": "practica", "label": f"Práctica {p['n']}{fecha} ({n} preg.)", "n": n})
+    for t in exam_tests():
+        n = len(test_question_ids(t["id"]))
+        out.append({"id": t["id"], "kind": "convocatoria", "label": f"{t['name']} ({n} preg.)", "n": n})
+    return out

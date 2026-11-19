@@ -37,11 +37,28 @@ def render() -> None:
     tps = bank.topics_by_anexo(anexo)
     ids = [t["id"] for t in tps]
     labels = {t["id"]: _topic_option(t, tests) for t in tps}
-    prev = [t for t in saved.get("topics", []) if t in ids] if saved.get("anexo") == anexo else []
-    topics = st.multiselect(f"Temas incluidos ({bank.ANEXOS[anexo]})", ids, default=prev or ids,
-                            format_func=labels.get, key=f"sim_topics_{anexo}")
-    avail = len(exams.select_questions(topics, None, exams.SEL_ALL)) if topics else 0
-    st.caption(f"{len(topics)} de {len(ids)} temas · **{avail}** preguntas distintas disponibles (sin duplicadas)")
+    srcs = bank.anexo1_sources() if anexo in ("I", "todos") else []
+    src_ids = [x["id"] for x in srcs]
+    src_lab = {x["id"]: x["label"] for x in srcs}
+    if srcs:
+        presets = {"todo": "Todo el Anexo I" if anexo == "I" else "Todo (temas + prácticas y exámenes)",
+                   "temas": "Solo temas", "practicas": "Prácticas de clase", "convocatoria": "Examen primera convocatoria",
+                   "final": "Simulacro final de examen", "custom": "Personalizado"}
+        pre = st.selectbox("Contenido", list(presets), format_func=presets.get, key=f"sim_pre_{anexo}")
+        def_t = ids if pre in ("todo", "temas") else []
+        def_s = (src_ids if pre == "todo" else [] if pre == "temas"
+                 else [x["id"] for x in srcs if x["kind"] == pre] if pre != "custom" else [])
+        if pre == "custom":
+            def_t = ids
+    else:
+        pre, def_t, def_s = "anexo2", ids, []
+    topics = st.multiselect(f"Temas incluidos ({bank.ANEXOS[anexo]})", ids, default=def_t,
+                            format_func=labels.get, key=f"sim_topics_{anexo}_{pre}")
+    sources = st.multiselect("Prácticas y exámenes del Anexo I (uno, varios o combinados con temas)", src_ids,
+                             default=def_s, format_func=src_lab.get, key=f"sim_src_{anexo}_{pre}") if srcs else []
+    avail = len(exams.select_questions(topics, None, exams.SEL_ALL, test_ids=sources)) if (topics or sources) else 0
+    st.caption(f"{len(topics)} de {len(ids)} temas · {len(sources)} prácticas/exámenes · "
+               f"**{avail}** preguntas distintas disponibles (sin duplicadas)")
     with st.form("sim_form"):
         c1, c2 = st.columns(2)
         n = c1.number_input("Número de preguntas", 5, 500, int(saved.get("n", 50)), step=5)
@@ -59,17 +76,18 @@ def render() -> None:
         go_ = st.form_submit_button("🚀 Empezar simulacro", type="primary")
     if go_:
         topics = [t for t in topics if t in ids]  # nunca temas de otro anexo
-        if not topics:
-            st.error("Selecciona algún tema.")
+        sources = [x for x in sources if x in src_ids]
+        if not topics and not sources:
+            st.error("Selecciona algún tema, práctica o examen.")
             return
         wrong = PRESETS[preset] if PRESETS[preset] is not None else custom
         db.set_setting("simulacro", {"n": n, "mins": mins, "topics": topics, "anexo": anexo, "correct": pc,
                                      "preset": preset, "wrong": custom, "blank": blank})
-        qids = exams.select_questions(topics, int(n), sel)
+        qids = exams.select_questions(topics, int(n), sel, test_ids=sources)
         title = f"Simulacro {bank.ANEXOS[anexo]} · {len(qids)} preguntas · {mins} min"
-        nav.start_exam("simulacro", "examen", title, qids, topics,
+        nav.start_exam("simulacro", "examen", title, qids, topics + (["CP"] if sources else []),
                        scoring=exams.Scoring(correct=pc, wrong=wrong, blank=blank, scale=10.0), time_limit_s=int(mins * 60),
-                       extra={"simulacion": True, "anexo": anexo})
+                       extra={"simulacion": True, "anexo": anexo, "fuentes": sources})
 
     hist = exams.history(kind="simulacro")
     if hist:

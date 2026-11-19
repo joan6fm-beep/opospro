@@ -87,9 +87,17 @@ def _dedupe_groups(ids: list[str]) -> list[str]:
 
 
 def select_questions(topic_ids: list[str] | None, n: int | None, selection: str = SEL_ALL,
-                     seed: int | None = None, exclude: set[str] | None = None) -> list[str]:
+                     seed: int | None = None, exclude: set[str] | None = None,
+                     test_ids: list[str] | None = None) -> list[str]:
+    """`test_ids`: añade las preguntas (con solución oficial) de test concretos; sin `topic_ids`, solo esas."""
     rng = random.Random(seed)
-    pool = bank.question_ids_for_topics(topic_ids)
+    if test_ids:
+        pool = list(bank.question_ids_for_topics(topic_ids)) if topic_ids else []
+        for t in test_ids:
+            pool += bank.test_question_ids(t)
+        pool = list(dict.fromkeys(pool))  # sin repetidas aunque una pregunta esté en varias fuentes
+    else:
+        pool = bank.question_ids_for_topics(topic_ids)
     if exclude:
         pool = [i for i in pool if i not in exclude]
     states = srs.all_states()
@@ -104,7 +112,7 @@ def select_questions(topic_ids: list[str] | None, n: int | None, selection: str 
     elif selection == SEL_CORRECT:
         pool = [i for i in pool if seen(i) and states[i]["n_correct"] > 0]
     elif selection == SEL_DUE:
-        due = set(srs.due_ids(topic_ids))
+        due = set(srs.due_ids(topic_ids if not test_ids else None))
         pool = [i for i in pool if i in due]
 
     rng.shuffle(pool)

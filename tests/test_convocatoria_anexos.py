@@ -90,7 +90,7 @@ def test_paginas_simulacros_y_convocatoria(clean_user):
     at.run()
     assert not at.exception, [e.message for e in at.exception]
     at.segmented_control(key="sim_anexo").set_value("II").run()
-    ms = at.multiselect(key="sim_topics_II")
+    ms = at.multiselect(key="sim_topics_II_anexo2")
     assert ms.options and all(o.startswith("Anexo II · Tema") for o in ms.options)
     ms.set_value(["A2-T01"]).run()
     assert not at.exception
@@ -114,3 +114,40 @@ def test_paginas_simulacros_y_convocatoria(clean_user):
     at3.run()
     assert not at3.exception
     assert any("Anexo II · Tema 3" in m.value for m in at3.markdown)
+
+
+def test_fuentes_anexo1():
+    src = bank.anexo1_sources()
+    kinds = [x["kind"] for x in src]
+    assert kinds.count("practica") == 6 and kinds.count("final") == 1 and kinds.count("convocatoria") == 1
+    final = next(x for x in src if x["kind"] == "final")
+    conv = next(x for x in src if x["kind"] == "convocatoria")
+    assert final["n"] == 49 and conv["n"] == 30
+    # una fuente concreta: exactamente sus preguntas oficiales
+    assert set(exams.select_questions([], None, test_ids=[conv["id"]])) == set(bank.test_question_ids(conv["id"]))
+    # varias prácticas + temas: sin repetidas ni preguntas sin solución oficial
+    allsrc = [x["id"] for x in src]
+    a1 = [t["id"] for t in bank.topics_by_anexo("I")]
+    ids = exams.select_questions(a1, None, test_ids=allsrc)
+    assert len(ids) == len(set(ids))
+    qs = bank.get_questions(ids)
+    assert all(q.scoreable for q in qs.values())
+    assert {q.topic_id for q in qs.values()} <= set(a1) | {"CP", "EX1"}
+    assert not any(q.topic_id.startswith("A2-") for q in qs.values())
+    assert set(bank.test_question_ids(final["id"])) - set(ids) <= {i for i in bank.test_question_ids(final["id"])
+                                                                    if qs.get(i) is None}
+
+
+def test_simulacro_ui_anexo1_fuentes(clean_user):
+    at = AppTest.from_file(APP, default_timeout=90)
+    at.session_state["_test_page"] = "simulacros"
+    at.run()
+    at.segmented_control(key="sim_anexo").set_value("I").run()
+    at.selectbox(key="sim_pre_I").set_value("final").run()
+    assert not at.exception, [e.message for e in at.exception]
+    assert at.multiselect(key="sim_topics_I_final").value == []
+    [b for b in at.button if "Empezar simulacro" in b.label][0].click().run()
+    e = exams.get_exam(at.session_state["exam_id"])
+    final = next(x for x in bank.anexo1_sources() if x["kind"] == "final")
+    got = {a["question_id"] for a in exams.get_answers(e["id"])}
+    assert got <= set(bank.test_question_ids(final["id"])) and len(got) == min(49, e["n_questions"])
